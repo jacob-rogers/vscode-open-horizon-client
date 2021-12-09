@@ -1,0 +1,125 @@
+{
+  "name": "open-horizon-client",
+  "displayName": "Open Horizon client",
+  "description": "Make easy to manage services, edge nodes and deployment configurations for Open Horizon projects",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.63.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages",
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jacob-rogers/vscode-open-horizon-client"
+  },
+  "homepage": "https://github.com/jacob-rogers/vscode-open-horizon-client/blob/main/README.md",
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:open-horizon-client.helloOpenHorizonWorld",
+    "onCommand:open-horizon-client.showCurrentTime"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "open-horizon-client.helloOpenHorizonWorld",
+        "title": "Hello Open Horizon world",
+        "category": "%open-horizon-client.categories.openHorizon%"
+      },
+      {
+        "command": "open-horizon-client.showCurrentTime",
+        "title": "Show Current Time",
+        "category": "%open-horizon-client.categories.openHorizon%",
+        "shortTitle": "Show Time.Now()",
+        "icon": "$(extensions-star-empty)"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "isMac",
+          "command": "open-horizon-client.showCurrentTime",
+          "group": "horizon"
+        }
+      ],
+      "view/title": [
+        {
+          "when": "isMac && view in [hznServices, hznNodes, hznPatterns, hznPolicies]",
+          "command": "open-horizon-client.showCurrentTime",
+          "group": "navigation@1"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "servicedef",
+        "aliases": ["Open Horizon service definition"],
+        "filenamePatterns": ["*service.definition.json"]
+      }
+    ],
+    "views": {
+      "openHorizonView": [
+        {
+          "id": "hznServices",
+          "name": "%open-horizon-client.views.hznServices%"
+        },
+        {
+          "id": "hznNodes",
+          "name": "%open-horizon-client.views.hznNodes%"
+        },
+        {
+          "id": "hznPatterns",
+          "name": "%open-horizon-client.views.hznPatterns%",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "hznPolicies",
+          "name": "%open-horizon-client.views.hznPolicies%",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "icon": "$(circuit-board)",
+          "id": "openHorizonView",
+          "title": "%open-horizon-client.views.activityBar%"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.4",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.63.0",
+    "@typescript-eslint/eslint-plugin": "^5.1.0",
+    "@typescript-eslint/parser": "^5.1.0",
+    "@vscode/test-electron": "^1.6.2",
+    "eslint": "^8.1.0",
+    "glob": "^7.1.7",
+    "mocha": "^9.1.3",
+    "ts-loader": "^9.2.5",
+    "typescript": "^4.4.4",
+    "webpack": "^5.52.1",
+    "webpack-cli": "^4.8.0"
+  },
+  "dependencies": {
+    "vscode-nls": "^5.0.0"
+  }
+}

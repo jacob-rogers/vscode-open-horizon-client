@@ -1,0 +1,8 @@
+{
+  "open-horizon-client.categories.openHorizon": "Open Horizon",
+  "open-horizon-client.views.activityBar": "Open Horizon",
+  "open-horizon-client.views.hznNodes": "Horizon edge nodes",
+  "open-horizon-client.views.hznPatterns": "Horizon patterns",
+  "open-horizon-client.views.hznPolicies": "Horizon policies",
+  "open-horizon-client.views.hznServices": "Horizon services"
+}
