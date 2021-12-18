@@ -1,8 +1,12 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
+import { AuthSettings } from './auth';
 import { ext } from './extensionVariables';
+import { HorizonTreeDataProvider } from './HorizonTreeDataProvider';
+import { activateBinary } from './hzn';
+
+const hzn = activateBinary();
+const extName = 'open-horizon-client';
 
 function initExtVariables(context: vscode.ExtensionContext): void {
 	ext.context = context;
@@ -10,35 +14,31 @@ function initExtVariables(context: vscode.ExtensionContext): void {
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+	console.log(`Congratulations, your extension "${extName}" is now active!`);
+
+	const subscriptions = context.subscriptions;
+
+	// Check whether hzn cli is installed
+	hzn.checkLocation();
 
 	// Init extension variables first
 	initExtVariables(context);
-	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "open-horizon-client" is now active!');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposableHello = vscode.commands.registerCommand('open-horizon-client.helloOpenHorizonWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello VS Code');
+	// Initialize and get current instance of our Secret Storage
+	AuthSettings.init(context);
+	const settings = AuthSettings.instance;
+	const authData = await settings.getAuthData();
+
+	const horizonDataProvider = new HorizonTreeDataProvider(context, authData);
+
+	const disposables = [];
+	disposables.push(vscode.window.registerTreeDataProvider('horizonExplorer', horizonDataProvider));
+
+	disposables.forEach((sub) => {
+		subscriptions.push(sub);
 	});
-
-	let disposableCurrentTime = vscode.commands.registerCommand('open-horizon-client.showCurrentTime', () => {
-		const date = new Date();
-		const localCurrentDate = date.toLocaleDateString('ru-RU');
-		const localCurrentTime = date.toLocaleTimeString('ru-RU');
-
-		vscode.window.showWarningMessage(`Current date is ${localCurrentDate}, current time is ${localCurrentTime}`);
-	});
-
-	context.subscriptions.push(disposableHello);
-	context.subscriptions.push(disposableCurrentTime);
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

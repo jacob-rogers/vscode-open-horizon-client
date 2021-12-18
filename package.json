@@ -16,69 +16,61 @@
     "url": "https://github.com/jacob-rogers/vscode-open-horizon-client"
   },
   "homepage": "https://github.com/jacob-rogers/vscode-open-horizon-client/blob/main/README.md",
+  "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    }
+  },
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:open-horizon-client.helloOpenHorizonWorld",
-    "onCommand:open-horizon-client.showCurrentTime"
+    "onView:horizonExplorer"
   ],
-  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "open-horizon-client.helloOpenHorizonWorld",
-        "title": "Hello Open Horizon world",
-        "category": "%open-horizon-client.categories.openHorizon%"
-      },
-      {
-        "command": "open-horizon-client.showCurrentTime",
-        "title": "Show Current Time",
+        "command": "open-horizon-client.setupConnectionSettings",
+        "title": "Setup connection settings",
         "category": "%open-horizon-client.categories.openHorizon%",
-        "shortTitle": "Show Time.Now()",
-        "icon": "$(extensions-star-empty)"
+        "icon": "$(gear)"
       }
     ],
-    "menus": {
-      "explorer/context": [
-        {
-          "when": "isMac",
-          "command": "open-horizon-client.showCurrentTime",
-          "group": "horizon"
+    "configuration": {
+      "type": "object",
+      "title": "Open Horizon",
+      "order": 2,
+      "properties": {
+        "openHorizon.hznCliBinaryLocation": {
+          "type": "string",
+          "default": "/usr/local/bin/hzn",
+          "description": "HZN CLI binary location. Default is /usr/local/bin/hzn",
+          "scope": "resource"
+        },
+        "openHorizon.connSettingsProvided": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether connection settings were provided or not. Default is false.",
+          "scope": "resource"
         }
-      ],
-      "view/title": [
-        {
-          "when": "isMac && view in [hznServices, hznNodes, hznPatterns, hznPolicies]",
-          "command": "open-horizon-client.showCurrentTime",
-          "group": "navigation@1"
-        }
-      ]
+      }
     },
     "languages": [
       {
         "id": "servicedef",
-        "aliases": ["Open Horizon service definition"],
-        "filenamePatterns": ["*service.definition.json"]
+        "aliases": [
+          "Open Horizon service definition"
+        ],
+        "filenamePatterns": [
+          "*service.definition.json"
+        ]
       }
     ],
     "views": {
       "openHorizonView": [
         {
-          "id": "hznServices",
-          "name": "%open-horizon-client.views.hznServices%"
-        },
-        {
-          "id": "hznNodes",
-          "name": "%open-horizon-client.views.hznNodes%"
-        },
-        {
-          "id": "hznPatterns",
-          "name": "%open-horizon-client.views.hznPatterns%",
-          "visibility": "collapsed"
-        },
-        {
-          "id": "hznPolicies",
-          "name": "%open-horizon-client.views.hznPolicies%",
-          "visibility": "collapsed"
+          "id": "horizonExplorer",
+          "name": "Horizon Explorer",
+          "when": "config.openHorizon.connSettingsProvided == true"
         }
       ]
     },
@@ -105,8 +97,10 @@
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
+    "@types/got": "^9.6.12",
     "@types/mocha": "^9.0.0",
     "@types/node": "14.x",
+    "@types/shelljs": "^0.8.9",
     "@types/vscode": "^1.63.0",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
@@ -120,6 +114,9 @@
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
+    "axios": "^0.24.0",
+    "got": "^12.0.0",
+    "shelljs": "^0.8.4",
     "vscode-nls": "^5.0.0"
   }
 }
