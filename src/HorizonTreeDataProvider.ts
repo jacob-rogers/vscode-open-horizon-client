@@ -3,21 +3,8 @@ import {
   ProviderResult, TreeDataProvider, TreeItem
 } from 'vscode';
 import { AuthData } from './auth';
-import { HorizonNode, NodeType } from './model/HorizonNode';
+import { ClusterNode } from './model/ClusterNode';
 import { ITreeNode } from './model/TreeNode';
-
-interface Node {
-  type: NodeType;
-  label: string;
-  data?: any;
-}
-
-const ROOTS = [
-  { label: 'Services', type: 'service' },
-  { label: 'Nodes', type: 'node' },
-  { label: 'Patterns', type: 'pattern' },
-  { label: 'Policies', type: 'policy' }
-];
 
 export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
 
@@ -42,18 +29,8 @@ export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
   }
 
   private getHorizonObjects(): ITreeNode[] {
-    const horizonObjects: ITreeNode[] = [];
-    ROOTS.forEach((root) => {
-      const node = new HorizonNode(
-        this._authData,
-        (root as Node).label,
-        (root as Node).type,
-        true,
-      );
-
-      horizonObjects.push(node);
-    });
-
-    return horizonObjects;
+    return [
+      new ClusterNode(this._authData, 'Edge Cluster')
+    ];
   }
 }

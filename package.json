@@ -82,6 +82,15 @@
           "title": "%open-horizon-client.views.activityBar%"
         }
       ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "open-horizon-client.showServiceStatus",
+          "when": "view == horizonExplorer && viewItem == service",
+          "group": "inline"
+        }
+      ]
     }
   },
   "scripts": {

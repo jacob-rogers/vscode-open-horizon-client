@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { AuthSettings } from './auth';
 import { ext } from './extensionVariables';
+import { HorizonObjectDecorationProvider } from './HorizonObjectDecorationProvider';
 import { HorizonTreeDataProvider } from './HorizonTreeDataProvider';
 import { activateBinary } from './hzn';
 
@@ -34,6 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const disposables = [];
 	disposables.push(vscode.window.registerTreeDataProvider('horizonExplorer', horizonDataProvider));
+
+	disposables.push(new HorizonObjectDecorationProvider());
 
 	disposables.forEach((sub) => {
 		subscriptions.push(sub);

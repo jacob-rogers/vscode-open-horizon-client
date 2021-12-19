@@ -3,14 +3,14 @@ import { URL } from 'url';
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { AuthData } from '../auth';
 import { httpClient } from '../http';
-import { NodeItem } from './NodeItem';
+import { NodeItem, NodeMetadata } from './NodeItem';
 import { PatternItem } from './PatternItem';
 import { PolicyItem } from './PolicyItem';
-import { ServiceItem } from './ServiceItem';
+import { ServiceItem, ServiceMetadata } from './ServiceItem';
 import { ITreeNode } from './TreeNode';
 
 
-export type NodeType = 'service' | 'node' | 'pattern' | 'policy';
+export type NodeType = 'cluster' | 'org' | 'service' | 'node' | 'pattern' | 'policy';
 
 export class HorizonNode implements ITreeNode {
 
@@ -50,24 +50,22 @@ export class HorizonNode implements ITreeNode {
 
       await client.get(url)
         .then((response) => {
-          const servicesPerOrg = new Map<string, Array<string>>();
-          Object.keys(response.data.services).forEach((service: string) => {
-            const [ nodeOrgId, serviceName ] = service.split('/', 2);
-            if (servicesPerOrg.has(nodeOrgId)) {
-              servicesPerOrg.set(
-                nodeOrgId,
-                (servicesPerOrg.get(nodeOrgId) as string[]).concat(serviceName),
-              );
+          const services = new Map<string, ServiceMetadata[]>();
+
+          Object.entries(response.data.services).forEach(([name, meta]: any) => {
+            // const [ , serviceName ] = name.split('/', 2);
+            const serviceName = (meta as ServiceMetadata).url;
+            if (services.has(serviceName)) {
+              const oldMetaList = services.get(serviceName) as ServiceMetadata[];
+              const newMetaList = [...oldMetaList, meta];
+              services.set(serviceName, newMetaList);
             } else {
-              servicesPerOrg.set(nodeOrgId, [serviceName]);
+              services.set(serviceName, [meta]);
             }
           });
 
-          for (let org of servicesPerOrg.keys()) {
-            const orgLabel = `${org} (organization)`;
-            children.push(
-              new ServiceItem(this._authData, orgLabel, servicesPerOrg.get(org)),
-            );
+          for (const [serviceName, serviceMetadataList] of services) {
+            children.push(new ServiceItem(this._authData, serviceName, serviceMetadataList, 'url'));
           }
         })
         .catch((response: AxiosError) => {
@@ -80,23 +78,17 @@ export class HorizonNode implements ITreeNode {
 
       await client.get(url)
         .then((response) => {
-          const nodesPerOrg = new Map<string, Array<string>>();
-          Object.keys(response.data.nodes).forEach((node: string) => {
-            const [ nodeOrgId, nodeName ] = node.split('/', 2);
-            if (nodesPerOrg.has(nodeOrgId)) {
-              nodesPerOrg.set(
-                nodeOrgId,
-                (nodesPerOrg.get(nodeOrgId) as string[]).concat(nodeName),
-              );
-            } else {
-              nodesPerOrg.set(nodeOrgId, [nodeName]);
-            }
+          const nodes = new Map<string, NodeMetadata>();
+
+          Object.entries(response.data.nodes).forEach(([name, meta]: any) => {
+            // const [ nodeOrgId, nodeName ] = node.split('/', 2);
+            nodes.set(name, meta);
           });
 
-          for (let org of nodesPerOrg.keys()) {
-            const orgLabel = `${org} (organization)`;
+
+          for (const [nodeName, nodeMetadata] of nodes) {
             children.push(
-              new NodeItem(this._authData, orgLabel, nodesPerOrg.get(org)),
+              new NodeItem(this._authData, nodeName, nodeMetadata),
             );
           }
         })
@@ -110,25 +102,10 @@ export class HorizonNode implements ITreeNode {
 
       await client.get(url)
         .then((response) => {
-          const patternsPerOrg = new Map<string, Array<string>>();
           Object.keys(response.data.patterns).forEach((pattern: string) => {
-            const [ patternOrgId, patternName ] = pattern.split('/', 2);
-            if (patternsPerOrg.has(patternOrgId)) {
-              patternsPerOrg.set(
-                patternOrgId,
-                (patternsPerOrg.get(patternOrgId) as string[]).concat(patternName),
-              );
-            } else {
-              patternsPerOrg.set(patternOrgId, [patternName]);
-            }
+            const [ , patternName ] = pattern.split('/', 2);
+            children.push(new PatternItem(this._authData, patternName));
           });
-
-          for (let org of patternsPerOrg.keys()) {
-            const orgLabel = `${org} (organization)`;
-            children.push(
-              new PatternItem(this._authData, orgLabel, patternsPerOrg.get(org)),
-            );
-          }
         })
         .catch((response: AxiosError) => {
           console.log('axios.error.response', response.toJSON());
@@ -140,25 +117,10 @@ export class HorizonNode implements ITreeNode {
 
       await client.get(url)
         .then((response) => {
-          const policiesPerOrg = new Map<string, Array<string>>();
           Object.keys(response.data.businessPolicy).forEach((policy: string) => {
-            const [ policyOrgId, policyName ] = policy.split('/', 2);
-            if (policiesPerOrg.has(policyOrgId)) {
-              policiesPerOrg.set(
-                policyOrgId,
-                (policiesPerOrg.get(policyOrgId) as string[]).concat(policyName),
-              );
-            } else {
-              policiesPerOrg.set(policyOrgId, [policyName]);
-            }
+            const [ , policyName ] = policy.split('/', 2);
+            children.push(new PolicyItem(this._authData, policyName));
           });
-
-          for (let org of policiesPerOrg.keys()) {
-            const orgLabel = `${org} (organization)`;
-            children.push(
-              new PolicyItem(this._authData, orgLabel, policiesPerOrg.get(org)),
-            );
-          }
         })
         .catch((response: AxiosError) => {
           console.log('axios.error.response', response.toJSON());
