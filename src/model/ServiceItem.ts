@@ -1,18 +1,12 @@
-import path = require('path');
-import { TreeItem, TreeItemCollapsibleState, Uri, window } from 'vscode';
+import * as path from 'path';
+import { TreeItem, TreeItemCollapsibleState, Uri } from 'vscode';
 
 import { AuthData } from '../auth';
 import { ITreeNode } from './TreeNode';
-
-export interface ServiceMetadata {
-  arch: string;
-  version: string;
-  url: string;
-}
-
-type ServiceGroup = 'arch' | 'url' | 'version' | 'none';
+import { NodeType, ServiceGroup, ServiceMetadata } from './types';
 
 export class ServiceItem implements ITreeNode {
+  private readonly _type: NodeType = NodeType.SERVICE;
 
   constructor(
     private readonly _authData: AuthData,

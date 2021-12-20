@@ -1,32 +1,29 @@
 import { AxiosError } from 'axios';
-import { URL } from 'url';
-import { TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { TreeItem, TreeItemCollapsibleState, window } from 'vscode';
+
 import { AuthData } from '../auth';
-import { httpClient } from '../http';
-import { NodeItem, NodeMetadata } from './NodeItem';
+import {
+  getApiNodesUrl, getApiPatternsUrl,
+  getApiPoliciesUrl, getApiServicesUrl, httpClient,
+} from '../http';
+import { DeviceNode } from './DeviceNode';
 import { PatternItem } from './PatternItem';
 import { PolicyItem } from './PolicyItem';
-import { ServiceItem, ServiceMetadata } from './ServiceItem';
+import { ServiceItem } from './ServiceItem';
 import { ITreeNode } from './TreeNode';
-
-
-export type NodeType = 'cluster' | 'org' | 'service' | 'node' | 'pattern' | 'policy';
+import { NodeMetadata, NodeType, ServiceMetadata } from './types';
 
 export class HorizonNode implements ITreeNode {
-
   private readonly _label: string;
   private readonly _type: NodeType;
-  private readonly _isRoot: boolean;
 
   constructor(
     private readonly _authData: AuthData,
     label: string,
     type: NodeType,
-    isRoot = false,
   ) {
     this._label = label;
     this._type = type;
-    this._isRoot = isRoot;
   }
 
   public getTreeItem(): Promise<TreeItem> | TreeItem {
@@ -41,90 +38,86 @@ export class HorizonNode implements ITreeNode {
   public async getChildren(): Promise<ITreeNode[]> {
     const children: ITreeNode[] = [];
     const client = httpClient(this._authData);
-    const { orgId, exchangeURL } = this._authData.account;
 
-    if (this._type === 'service' && this._isRoot === true) {
-      const url = new URL(
-        encodeURI(`${exchangeURL}orgs/${orgId}/services`),
-      ).toString();
+    switch (this._type) {
+      case NodeType.SERVICE:
+        const servicesUrl = getApiServicesUrl(this._authData);
 
-      await client.get(url)
-        .then((response) => {
-          const services = new Map<string, ServiceMetadata[]>();
+        await client.get(servicesUrl)
+          .then((response) => {
+            const services = new Map<string, ServiceMetadata[]>();
 
-          Object.entries(response.data.services).forEach(([name, meta]: any) => {
-            // const [ , serviceName ] = name.split('/', 2);
-            const serviceName = (meta as ServiceMetadata).url;
-            if (services.has(serviceName)) {
-              const oldMetaList = services.get(serviceName) as ServiceMetadata[];
-              const newMetaList = [...oldMetaList, meta];
-              services.set(serviceName, newMetaList);
-            } else {
-              services.set(serviceName, [meta]);
+            Object.entries(response.data.services).forEach(([name, meta]: any) => {
+              const serviceName = (meta as ServiceMetadata).url;
+              if (services.has(serviceName)) {
+                const oldMetaList = services.get(serviceName) as ServiceMetadata[];
+                const newMetaList = [...oldMetaList, meta];
+                services.set(serviceName, newMetaList);
+              } else {
+                services.set(serviceName, [meta]);
+              }
+            });
+
+            for (const [serviceName, serviceMetadataList] of services) {
+              children.push(new ServiceItem(this._authData, serviceName, serviceMetadataList, 'url'));
             }
+          })
+          .catch((response: AxiosError) => {
+            console.log('axios.error.response', response.toJSON());
           });
+        break;
+      case NodeType.NODE:
+        const nodesUrl = getApiNodesUrl(this._authData);
 
-          for (const [serviceName, serviceMetadataList] of services) {
-            children.push(new ServiceItem(this._authData, serviceName, serviceMetadataList, 'url'));
-          }
-        })
-        .catch((response: AxiosError) => {
-          console.log('axios.error.response', response.toJSON());
-        });
-    } else if (this._type === 'node' && this._isRoot === true) {
-      const url = new URL(
-        encodeURI(`${exchangeURL}orgs/${orgId}/nodes`),
-      ).toString();
+        await client.get(nodesUrl)
+          .then((response) => {
+            const nodes = new Map<string, NodeMetadata>();
 
-      await client.get(url)
-        .then((response) => {
-          const nodes = new Map<string, NodeMetadata>();
+            Object.entries(response.data.nodes).forEach(([name, meta]: any) => {
+              nodes.set(name, meta);
+            });
 
-          Object.entries(response.data.nodes).forEach(([name, meta]: any) => {
-            // const [ nodeOrgId, nodeName ] = node.split('/', 2);
-            nodes.set(name, meta);
+            for (const [nodeName, nodeMetadata] of nodes) {
+              children.push(
+                new DeviceNode(this._authData, nodeName, nodeMetadata),
+              );
+            }
+          })
+          .catch((response: AxiosError) => {
+            console.log('axios.error.response', response.toJSON());
           });
+        break;
+      case NodeType.PATTERN:
+        const patternsUrl = getApiPatternsUrl(this._authData);
 
-
-          for (const [nodeName, nodeMetadata] of nodes) {
-            children.push(
-              new NodeItem(this._authData, nodeName, nodeMetadata),
-            );
-          }
-        })
-        .catch((response: AxiosError) => {
-          console.log('axios.error.response', response.toJSON());
-        });
-    } else if (this._type === 'pattern' && this._isRoot === true) {
-      const url = new URL(
-        encodeURI(`${exchangeURL}orgs/${orgId}/patterns`),
-      ).toString();
-
-      await client.get(url)
-        .then((response) => {
-          Object.keys(response.data.patterns).forEach((pattern: string) => {
-            const [ , patternName ] = pattern.split('/', 2);
-            children.push(new PatternItem(this._authData, patternName));
+        await client.get(patternsUrl)
+          .then((response) => {
+            Object.keys(response.data.patterns).forEach((pattern: string) => {
+              const [, patternName] = pattern.split('/', 2);
+              children.push(new PatternItem(this._authData, patternName));
+            });
+          })
+          .catch((response: AxiosError) => {
+            console.log('axios.error.response', response.toJSON());
           });
-        })
-        .catch((response: AxiosError) => {
-          console.log('axios.error.response', response.toJSON());
-        });
-    } else if (this._type === 'policy' && this._isRoot === true) {
-      const url = new URL(
-        encodeURI(`${exchangeURL}orgs/${orgId}/business/policies`),
-      ).toString();
+        break;
+      case NodeType.POLICY:
+        const policiesUrl = getApiPoliciesUrl(this._authData);
 
-      await client.get(url)
-        .then((response) => {
-          Object.keys(response.data.businessPolicy).forEach((policy: string) => {
-            const [ , policyName ] = policy.split('/', 2);
-            children.push(new PolicyItem(this._authData, policyName));
+        await client.get(policiesUrl)
+          .then((response) => {
+            Object.keys(response.data.businessPolicy).forEach((policy: string) => {
+              const [, policyName] = policy.split('/', 2);
+              children.push(new PolicyItem(this._authData, policyName));
+            });
+          })
+          .catch((response: AxiosError) => {
+            console.log('axios.error.response', response.toJSON());
           });
-        })
-        .catch((response: AxiosError) => {
-          console.log('axios.error.response', response.toJSON());
-        });
+        break;
+      default:
+        window.showErrorMessage(`Unknown node type: ${this._type}`);
+        return Promise.reject();
     }
 
     return Promise.resolve(children);

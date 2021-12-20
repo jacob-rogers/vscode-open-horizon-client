@@ -1,24 +1,20 @@
-import path = require('path');
+import * as path from 'path';
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
+
 import { AuthData } from '../auth';
-import { HorizonNode, NodeType } from './HorizonNode';
+import { HorizonNode } from './HorizonNode';
 import { ITreeNode } from './TreeNode';
+import { Node, NodeType } from './types';
 
-interface Node {
-  type: NodeType;
-  label: string;
-  data?: any;
-}
-
-const ROOTS = [
-  { label: 'Services', type: 'service' },
-  { label: 'Nodes', type: 'node' },
-  { label: 'Patterns', type: 'pattern' },
-  { label: 'Policies', type: 'policy' }
+const HORIZON_ORG_OBJECTS = [
+  { label: 'Services', type: NodeType.SERVICE },
+  { label: 'Nodes', type: NodeType.NODE },
+  { label: 'Patterns', type: NodeType.PATTERN },
+  { label: 'Policies', type: NodeType.POLICY }
 ];
 
 export class OrgNode implements ITreeNode {
-  private readonly _type: NodeType = 'org';
+  private readonly _type: NodeType = NodeType.ORG;
 
   constructor(
     private readonly _authData: AuthData,
@@ -29,6 +25,7 @@ export class OrgNode implements ITreeNode {
     const label = this._label;
     return {
       label,
+      description: '(org)',
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: `${this._type}-node`,
       iconPath: path.join(__filename, '..', '..', 'resources', 'org.svg'),
@@ -38,9 +35,9 @@ export class OrgNode implements ITreeNode {
   public getChildren(): Promise<ITreeNode[]> {
     const children: ITreeNode[] = [];
 
-    (ROOTS as Node[]).forEach((root) => {
+    (HORIZON_ORG_OBJECTS as Node[]).forEach((root) => {
       children.push(
-        new HorizonNode(this._authData, root.label, root.type, true),
+        new HorizonNode(this._authData, root.label, root.type),
       );
     });
 

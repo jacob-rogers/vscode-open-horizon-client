@@ -1,3 +1,4 @@
+import { URL } from 'url';
 import {
   Event, EventEmitter, ExtensionContext,
   ProviderResult, TreeDataProvider, TreeItem
@@ -29,8 +30,11 @@ export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
   }
 
   private getHorizonObjects(): ITreeNode[] {
+    // Here is only a single cluster with configuration defined at auth data
+    const clusterLabel = new URL(this._authData.account.exchangeURL).host;
+    const clusters = [new ClusterNode(this._authData, clusterLabel)];
     return [
-      new ClusterNode(this._authData, 'Edge Cluster')
+      new ClusterNode(this._authData, 'Edge Clusters', clusters),
     ];
   }
 }

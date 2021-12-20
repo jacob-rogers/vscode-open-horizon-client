@@ -1,10 +1,12 @@
-import path = require('path');
+import * as path from 'path';
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import { AuthData } from '../auth';
 import { ITreeNode } from './TreeNode';
+import { NodeType } from './types';
 
 export class PolicyItem implements ITreeNode {
+  private readonly _type: NodeType = NodeType.POLICY;
 
   constructor(
     private readonly _authData: AuthData,
