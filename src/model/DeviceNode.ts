@@ -24,8 +24,8 @@ export class DeviceNode implements ITreeNode {
       ? this._label.split('/', 2)[1]
       : this._label;
     const nodeStatus = this._metadata.publicKey.length ? 'running' : 'stopped';
-    const resourceUri = getNodeResourceURI(clusterHost, orgId, label)
-      .with({ query: `status=${nodeStatus}` });
+    let resourceUri = getNodeResourceURI(clusterHost, orgId, label);
+    resourceUri = resourceUri.with({ query: `status=${nodeStatus}` });
 
     return {
       label,

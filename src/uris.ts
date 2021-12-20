@@ -12,21 +12,26 @@ export function getClusterResourceURI(host: string): Uri {
 }
 
 export function getOrgResourceURI(host: string, orgId: string): Uri {
-  return getClusterResourceURI(host).with({ path: `/orgs/${orgId}` });
+  const baseUri = getClusterResourceURI(host);
+  return baseUri.with({ path: baseUri.path + `/orgs/${orgId}` });
 }
 
 export function getNodeResourceURI(host: string, orgId: string, nodeId: string): Uri {
-  return getOrgResourceURI(host, orgId).with({ path: `/nodes/${nodeId}` });
+  const baseUri = getOrgResourceURI(host, orgId);
+  return baseUri.with({ path: baseUri.path + `/nodes/${nodeId}` });
 }
 
 export function getPatternResourceURI(host: string, orgId: string, patternId: string): Uri {
-  return getOrgResourceURI(host, orgId).with({ path: `/patterns/${patternId}` });
+  const baseUri = getOrgResourceURI(host, orgId);
+  return baseUri.with({ path: baseUri.path + `/patterns/${patternId}` });
 }
 
 export function getPolicyResourceURI(host: string, orgId: string, policyId: string): Uri {
-  return getOrgResourceURI(host, orgId).with({ path: `/policies/${policyId}` });
+  const baseUri = getOrgResourceURI(host, orgId);
+  return baseUri.with({ path: baseUri.path + `/policies/${policyId}` });
 }
 
 export function getServiceResourceURI(host: string, orgId: string, serviceId: string): Uri {
-  return getOrgResourceURI(host, orgId).with({ path: `/services/${serviceId}` });
+  const baseUri = getOrgResourceURI(host, orgId);
+  return baseUri.with({ path: baseUri.path + `/services/${serviceId}` });
 }
