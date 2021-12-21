@@ -86,7 +86,6 @@ async function findHostBinary(binaryName: string): Promise<Location | ShellExecE
 
   return new Promise((resolve, _) => {
     shelljs.exec(cmd, options, (code, stdout, stderr) => {
-      console.log(`Shell exec: ${code} -- ${stdout} -- ${stderr}`);
       if (code || stderr.length) {
         resolve({ code, error: stderr });
       }

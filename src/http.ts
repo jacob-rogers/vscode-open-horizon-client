@@ -2,11 +2,11 @@ import axios, { AxiosInstance } from 'axios';
 import * as https from 'https';
 import { URL } from 'url';
 
-import { AuthData } from './auth';
+import { HTTPServiceAccount } from './model/types';
 
-export function httpClient(authData: AuthData): AxiosInstance {
-  const { orgId, exchangeUserAuth } = authData.account;
-  const [username, password] = exchangeUserAuth.split(':', 2);
+export function httpClient(serviceAccount: HTTPServiceAccount): AxiosInstance {
+  const { orgId, userpass } = serviceAccount;
+  const [username, password] = userpass.split(':', 2);
 
   const agent = new https.Agent({ rejectUnauthorized: false });
   // to make HTTP request work in VS Code extension,
@@ -25,8 +25,8 @@ export function httpClient(authData: AuthData): AxiosInstance {
   return axios.create(config);
 }
 
-function getApiBaseUrl(authData: AuthData): URL {
-  let baseUrl = authData.account.exchangeURL;
+function getApiBaseUrl(serviceAccount: HTTPServiceAccount): URL {
+  let baseUrl = serviceAccount.baseUrl;
   if (baseUrl.endsWith('/')) {
     baseUrl = baseUrl.slice(0, baseUrl.length-1);
   }
@@ -34,36 +34,36 @@ function getApiBaseUrl(authData: AuthData): URL {
   return new URL(baseUrl);
 }
 
-function getApiBaseOrgUrl(authData: AuthData): URL {
-  const baseUrl = getApiBaseUrl(authData);
-  baseUrl.pathname = baseUrl.pathname + '/orgs/' + authData.account.orgId;
+function getApiBaseOrgUrl(serviceAccount: HTTPServiceAccount): URL {
+  const baseUrl = getApiBaseUrl(serviceAccount);
+  baseUrl.pathname = baseUrl.pathname + '/orgs/' + serviceAccount.orgId;
 
   return baseUrl;
 }
 
-export function getApiNodesUrl(authData: AuthData): string {
-  const baseUrl = getApiBaseOrgUrl(authData);
+export function getApiNodesUrl(serviceAccount: HTTPServiceAccount): string {
+  const baseUrl = getApiBaseOrgUrl(serviceAccount);
   baseUrl.pathname = baseUrl.pathname + '/nodes';
 
   return baseUrl.toString();
 }
 
-export function getApiPatternsUrl(authData: AuthData): string {
-  const baseUrl = getApiBaseOrgUrl(authData);
+export function getApiPatternsUrl(serviceAccount: HTTPServiceAccount): string {
+  const baseUrl = getApiBaseOrgUrl(serviceAccount);
   baseUrl.pathname = baseUrl.pathname + '/patterns';
 
   return baseUrl.toString();
 }
 
-export function getApiPoliciesUrl(authData: AuthData): string {
-  const baseUrl = getApiBaseOrgUrl(authData);
+export function getApiPoliciesUrl(serviceAccount: HTTPServiceAccount): string {
+  const baseUrl = getApiBaseOrgUrl(serviceAccount);
   baseUrl.pathname = baseUrl.pathname + '/business/policies';
 
   return baseUrl.toString();
 }
 
-export function getApiServicesUrl(authData: AuthData): string {
-  const baseUrl = getApiBaseOrgUrl(authData);
+export function getApiServicesUrl(serviceAccount: HTTPServiceAccount): string {
+  const baseUrl = getApiBaseOrgUrl(serviceAccount);
   baseUrl.pathname = baseUrl.pathname + '/services';
 
   return baseUrl.toString();

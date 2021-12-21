@@ -7,6 +7,39 @@ export const enum NodeType {
   PATTERN = 'pattern',
   POLICY = 'policy',
 }
+
+export interface ClientConfiguration {
+  clusterAccounts: ClusterAccount[];
+}
+
+export interface ClusterAccount {
+  id: string;
+  name: string;
+  description?: string;
+  exchangeURL: string;
+  cssURL: string;
+  agbotURL?: string;
+  orgs: ClusterOrg[];
+  serviceKeys: {
+    public?: string;
+    private?: string;
+  }
+  clusterCertPath?: string;
+  agentNamespace?: string;
+  isAdmin?: boolean;
+}
+
+interface ClusterOrg {
+  id: string;
+  userAuth: string;
+}
+
+export interface HTTPServiceAccount {
+  baseUrl: string;
+  orgId: string;
+  userpass: string;
+}
+
 export interface Node {
   type: NodeType;
   label: string;

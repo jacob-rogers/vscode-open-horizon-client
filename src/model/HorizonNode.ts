@@ -1,7 +1,6 @@
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { TreeItem, TreeItemCollapsibleState, window } from 'vscode';
 
-import { AuthData } from '../auth';
 import {
   getApiNodesUrl, getApiPatternsUrl,
   getApiPoliciesUrl, getApiServicesUrl, httpClient,
@@ -11,14 +10,18 @@ import { PatternItem } from './PatternItem';
 import { PolicyItem } from './PolicyItem';
 import { ServiceItem } from './ServiceItem';
 import { ITreeNode } from './TreeNode';
-import { NodeMetadata, NodeType, ServiceMetadata } from './types';
+import {
+  ClusterAccount, HTTPServiceAccount, NodeMetadata,
+  NodeType, ServiceMetadata,
+} from './types';
 
 export class HorizonNode implements ITreeNode {
   private readonly _label: string;
   private readonly _type: NodeType;
 
   constructor(
-    private readonly _authData: AuthData,
+    private readonly _clusterAccount: ClusterAccount,
+    private readonly _orgId: string,
     label: string,
     type: NodeType,
   ) {
@@ -37,88 +40,94 @@ export class HorizonNode implements ITreeNode {
 
   public async getChildren(): Promise<ITreeNode[]> {
     const children: ITreeNode[] = [];
-    const client = httpClient(this._authData);
 
-    switch (this._type) {
-      case NodeType.SERVICE:
-        const servicesUrl = getApiServicesUrl(this._authData);
+    const serviceAccount: HTTPServiceAccount = {
+      baseUrl: this._clusterAccount.exchangeURL,
+      orgId: this._clusterAccount.orgs.find((o) => o.id === this._orgId)?.id || '',
+      userpass: this._clusterAccount.orgs.find((o) => o.id === this._orgId)?.userAuth || '',
+    };
+    const client = httpClient(serviceAccount);
 
-        await client.get(servicesUrl)
-          .then((response) => {
-            const services = new Map<string, ServiceMetadata[]>();
+    try {
+      let response: AxiosResponse;
+      switch (this._type) {
+        case NodeType.SERVICE:
+          const servicesUrl = getApiServicesUrl(serviceAccount);
 
-            Object.entries(response.data.services).forEach(([name, meta]: any) => {
-              const serviceName = (meta as ServiceMetadata).url;
-              if (services.has(serviceName)) {
-                const oldMetaList = services.get(serviceName) as ServiceMetadata[];
-                const newMetaList = [...oldMetaList, meta];
-                services.set(serviceName, newMetaList);
-              } else {
-                services.set(serviceName, [meta]);
-              }
-            });
+          response = await client.get(servicesUrl);
+          const services = new Map<string, ServiceMetadata[]>();
 
-            for (const [serviceName, serviceMetadataList] of services) {
-              children.push(new ServiceItem(this._authData, serviceName, serviceMetadataList, 'url'));
+          Object.entries(response.data.services).forEach(([_, meta]: any) => {
+            const serviceName = (meta as ServiceMetadata).url;
+            if (services.has(serviceName)) {
+              const oldMetaList = services.get(serviceName) as ServiceMetadata[];
+              const newMetaList = [...oldMetaList, meta];
+              services.set(serviceName, newMetaList);
+            } else {
+              services.set(serviceName, [meta]);
             }
-          })
-          .catch((response: AxiosError) => {
-            console.log('axios.error.response', response.toJSON());
           });
-        break;
-      case NodeType.NODE:
-        const nodesUrl = getApiNodesUrl(this._authData);
 
-        await client.get(nodesUrl)
-          .then((response) => {
-            const nodes = new Map<string, NodeMetadata>();
+          for (const [serviceName, serviceMetadataList] of services) {
+            children.push(
+              new ServiceItem(
+                this._clusterAccount, this._orgId,
+                serviceName, serviceMetadataList, 'url',
+              ),
+            );
+          }
 
-            Object.entries(response.data.nodes).forEach(([name, meta]: any) => {
-              nodes.set(name, meta);
-            });
+          break;
+        case NodeType.NODE:
+          const nodesUrl = getApiNodesUrl(serviceAccount);
 
-            for (const [nodeName, nodeMetadata] of nodes) {
-              children.push(
-                new DeviceNode(this._authData, nodeName, nodeMetadata),
-              );
-            }
-          })
-          .catch((response: AxiosError) => {
-            console.log('axios.error.response', response.toJSON());
+          response = await client.get(nodesUrl);
+          const nodes = new Map<string, NodeMetadata>();
+
+          Object.entries(response.data.nodes).forEach(([name, meta]: any) => {
+            nodes.set(name, meta);
           });
-        break;
-      case NodeType.PATTERN:
-        const patternsUrl = getApiPatternsUrl(this._authData);
 
-        await client.get(patternsUrl)
-          .then((response) => {
-            Object.keys(response.data.patterns).forEach((pattern: string) => {
-              const [, patternName] = pattern.split('/', 2);
-              children.push(new PatternItem(this._authData, patternName));
-            });
-          })
-          .catch((response: AxiosError) => {
-            console.log('axios.error.response', response.toJSON());
-          });
-        break;
-      case NodeType.POLICY:
-        const policiesUrl = getApiPoliciesUrl(this._authData);
+          for (const [nodeName, nodeMetadata] of nodes) {
+            children.push(
+              new DeviceNode(this._clusterAccount, this._orgId, nodeName, nodeMetadata),
+            );
+          }
 
-        await client.get(policiesUrl)
-          .then((response) => {
-            Object.keys(response.data.businessPolicy).forEach((policy: string) => {
-              const [, policyName] = policy.split('/', 2);
-              children.push(new PolicyItem(this._authData, policyName));
-            });
-          })
-          .catch((response: AxiosError) => {
-            console.log('axios.error.response', response.toJSON());
+          break;
+        case NodeType.PATTERN:
+          const patternsUrl = getApiPatternsUrl(serviceAccount);
+
+          response = await client.get(patternsUrl);
+          Object.keys(response.data.patterns).forEach((pattern: string) => {
+            const [, patternName] = pattern.split('/', 2);
+            children.push(new PatternItem(this._clusterAccount, this._orgId, patternName));
           });
-        break;
-      default:
-        window.showErrorMessage(`Unknown node type: ${this._type}`);
+
+          break;
+        case NodeType.POLICY:
+          const policiesUrl = getApiPoliciesUrl(serviceAccount);
+
+          response = await client.get(policiesUrl);
+          Object.keys(response.data.businessPolicy).forEach((policy: string) => {
+            const [, policyName] = policy.split('/', 2);
+            children.push(new PolicyItem(this._clusterAccount, this._orgId, policyName));
+          });
+
+          break;
+        default:
+          window.showErrorMessage(`Unknown node type: ${this._type}`);
+          return Promise.reject();
+      }
+    } catch (response: unknown) {
+      if ((response as AxiosError).message) {
+        window.showErrorMessage(`Cannot fetch Horizon objects of type '${this._type}': ${(response as AxiosError).message}`);
         return Promise.reject();
-    }
+      }
+
+      window.showErrorMessage(`Error: ${response}`);
+      return Promise.reject();
+    };
 
     return Promise.resolve(children);
   }

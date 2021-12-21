@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
-import { AuthData } from '../auth';
+import Config from '../config';
 import { OrgNode } from './OrgNode';
 import { ITreeNode } from './TreeNode';
 import { NodeType } from './types';
@@ -10,9 +10,8 @@ export class ClusterNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.CLUSTER;
 
   constructor(
-    private readonly _authData: AuthData,
+    private readonly _clusterId: string,
     private readonly _label: string,
-    private readonly _children?: ClusterNode[],
   ) { }
 
   public getTreeItem(): TreeItem | Promise<TreeItem> {
@@ -21,24 +20,23 @@ export class ClusterNode implements ITreeNode {
       label,
       collapsibleState: TreeItemCollapsibleState.Expanded,
       contextValue: `${this._type}-node`,
-      iconPath: !this._children
-        ? path.join(__filename, '..', '..', 'resources', 'cluster.svg')
-        : undefined,
+      iconPath: path.join(__filename, '..', '..', 'resources', 'cluster.svg'),
     };
   }
 
   public getChildren(): Promise<ITreeNode[]> {
     const children: ITreeNode[] = [];
 
-    if (this._children) {
-      for (const child of this._children) {
-        children.push(child);
-      }
-    } else {
-      for (const org of [this._authData.account.orgId]) {
-        children.push(new OrgNode(this._authData, org));
+    const { clusterAccounts } = Config.getInstance();
+    const clusterAccount = clusterAccounts.find((ca) => ca.id === this._clusterId);
+    const orgs = clusterAccount?.orgs;
+
+    if (orgs) {
+      for (const org of orgs) {
+        children.push(new OrgNode(clusterAccount, org));
       }
     }
+
 
     return Promise.resolve(children);
   }

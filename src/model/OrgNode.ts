@@ -1,10 +1,10 @@
 import * as path from 'path';
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
-import { AuthData } from '../auth';
+import { getOrgResourceURI } from '../uris';
 import { HorizonNode } from './HorizonNode';
 import { ITreeNode } from './TreeNode';
-import { Node, NodeType } from './types';
+import { ClusterAccount, ClusterOrg, Node, NodeType } from './types';
 
 const HORIZON_ORG_OBJECTS = [
   { label: 'Services', type: NodeType.SERVICE },
@@ -17,15 +17,20 @@ export class OrgNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.ORG;
 
   constructor(
-    private readonly _authData: AuthData,
-    private readonly _label: string,
+    private readonly _clusterAccount: ClusterAccount,
+    private readonly _org: ClusterOrg,
   ) { }
 
   public getTreeItem(): TreeItem | Promise<TreeItem> {
-    const label = this._label;
+    const label = this._org.id;
     return {
       label,
       description: '(org)',
+      command: {
+        command: 'open-horizon-client.openResource',
+        title: 'Open resource',
+        arguments: [ getOrgResourceURI(this._clusterAccount.exchangeURL, label), label ],
+      },
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: `${this._type}-node`,
       iconPath: path.join(__filename, '..', '..', 'resources', 'org.svg'),
@@ -37,7 +42,7 @@ export class OrgNode implements ITreeNode {
 
     (HORIZON_ORG_OBJECTS as Node[]).forEach((root) => {
       children.push(
-        new HorizonNode(this._authData, root.label, root.type),
+        new HorizonNode(this._clusterAccount, this._org.id, root.label, root.type),
       );
     });
 

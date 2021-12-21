@@ -1,15 +1,16 @@
 import * as path from 'path';
-import { TreeItem, TreeItemCollapsibleState, Uri } from 'vscode';
+import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
-import { AuthData } from '../auth';
+import { getServiceResourceURI } from '../uris';
 import { ITreeNode } from './TreeNode';
-import { NodeType, ServiceGroup, ServiceMetadata } from './types';
+import { ClusterAccount, NodeType, ServiceGroup, ServiceMetadata } from './types';
 
 export class ServiceItem implements ITreeNode {
   private readonly _type: NodeType = NodeType.SERVICE;
 
   constructor(
-    private readonly _authData: AuthData,
+    private readonly _clusterAccount: ClusterAccount,
+    private readonly _orgId: string,
     private readonly _label: string,
     private readonly _metadataList: ServiceMetadata[],
     private readonly _serviceGroup: ServiceGroup,
@@ -21,6 +22,7 @@ export class ServiceItem implements ITreeNode {
         ? TreeItemCollapsibleState.Collapsed
         : TreeItemCollapsibleState.None;
     const label = this._label;
+    const orgId = this._orgId;
     const contextValue = this._serviceGroup === 'url'
       ? 'service.url'
       : this._serviceGroup === 'arch'
@@ -39,10 +41,14 @@ export class ServiceItem implements ITreeNode {
 
     return {
       label,
-      description,
-      resourceUri: Uri.parse(`hzn://domain/org/service/${label}?status=running`),
-      contextValue,
       collapsibleState,
+      command: {
+        command: 'open-horizon-client.openResource',
+        title: 'Open resource',
+        arguments: [ getServiceResourceURI(this._clusterAccount.exchangeURL, orgId, label), label ],
+      },
+      description,
+      contextValue,
       iconPath,
       tooltip: label.toString(),
     };
@@ -52,7 +58,6 @@ export class ServiceItem implements ITreeNode {
     const children: ITreeNode[] = [];
 
     if (this._serviceGroup === 'url') {
-      console.log('service.group == url :: metadata ->', this._metadataList);
       const childrenByArch = new Map<string, ServiceMetadata[]>();
       for (const meta of this._metadataList) {
         if (childrenByArch.has(meta.arch)) {
@@ -65,10 +70,14 @@ export class ServiceItem implements ITreeNode {
       }
 
       for (const [serviceArch, serviceMetadataList] of childrenByArch.entries()) {
-        children.push(new ServiceItem(this._authData, serviceArch, serviceMetadataList, 'arch'));
+        children.push(
+          new ServiceItem(
+            this._clusterAccount, this._orgId,
+            serviceArch, serviceMetadataList, 'arch',
+          ),
+        );
       }
 
-      console.log('service.group == url :: children ->', children);
       return Promise.resolve(children);
     } else if (this._serviceGroup === 'arch') {
       const childrenByVersion = new Map<string, ServiceMetadata[]>();
@@ -83,7 +92,12 @@ export class ServiceItem implements ITreeNode {
       }
 
       for (const [serviceVersion, serviceMetadataList] of childrenByVersion.entries()) {
-        children.push(new ServiceItem(this._authData, serviceVersion, serviceMetadataList, 'version'));
+        children.push(
+          new ServiceItem(
+            this._clusterAccount, this._orgId,
+            serviceVersion, serviceMetadataList, 'version',
+          ),
+        );
       }
 
       return Promise.resolve(children);
@@ -101,7 +115,12 @@ export class ServiceItem implements ITreeNode {
     }
 
     for (const [service, serviceMetadataList] of childrenExact.entries()) {
-      children.push(new ServiceItem(this._authData, service, serviceMetadataList, 'none'));
+      children.push(
+        new ServiceItem(
+          this._clusterAccount, this._orgId,
+          service, serviceMetadataList, 'none',
+        ),
+      );
     }
 
     return Promise.resolve(children);

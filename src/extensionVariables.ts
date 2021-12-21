@@ -11,4 +11,9 @@ export namespace ext {
   export let hznNodesRoot: unknown;
   export let hznPatternsRoot: unknown;
   export let hznPoliciesRoot: unknown;
+
+  export let hznTempFsInitialized: boolean;
+
+  export const extensionName: string = 'open-horizon-client';
+  export const vfsScheme: string = 'hzn';
 }

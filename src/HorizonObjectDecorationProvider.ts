@@ -27,7 +27,6 @@ export class HorizonObjectDecorationProvider implements FileDecorationProvider, 
   }
 
   provideFileDecoration(uri: Uri, token: CancellationToken): ProviderResult<FileDecoration> {
-    console.log('provideFileDecoration() :: uri.path', uri.path);
     switch (uri.path.split('/')[3]) {
       case 'nodes':
         return this.provideNodeDecoration(uri, token);
@@ -37,9 +36,6 @@ export class HorizonObjectDecorationProvider implements FileDecorationProvider, 
   }
 
   provideNodeDecoration(uri: Uri, token: CancellationToken): ProviderResult<FileDecoration> {
-    // hzn://some_domain/orgs/org1/nodes/node_name1?status=running
-    // hzn://some_domain/orgs/org1/nodes/node_name2?status=stopped
-    console.log('provideNodeDecoration() :: uri', uri);
     const status = uri.query.split('&').find((v) => v.includes('status'))?.split('=')[1];
 
     switch (status as NodeStatus) {

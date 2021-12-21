@@ -24,15 +24,40 @@
   },
   "activationEvents": [
     "onStartupFinished",
+    "onCommand:open-horizon-client.addClusterAccount",
+    "onCommand:open-horizon-client.hznfs.init",
+    "onCommand:open-horizon-client.hznfs.workspaceInit",
+    "onCommand:open-horizon-client.openOrgFile",
     "onView:horizonExplorer"
   ],
   "contributes": {
     "commands": [
       {
+        "command": "open-horizon-client.addClusterAccount",
+        "title": "Add cluster account",
+        "category": "%open-horizon-client.categories.openHorizon%"
+      },
+      {
         "command": "open-horizon-client.setupConnectionSettings",
         "title": "Setup connection settings",
         "category": "%open-horizon-client.categories.openHorizon%",
         "icon": "$(gear)"
+      },
+      {
+        "command": "open-horizon-client.openResource",
+        "title": "Open resource",
+        "category": "%open-horizon-client.categories.openHorizon%",
+        "icon": "$(file)"
+      },
+      {
+        "command": "open-horizon-client.hznfs.init",
+        "category": "%open-horizon-client.categories.openHorizon%",
+        "title": "Init HZN FS"
+      },
+      {
+        "command": "open-horizon-client.hznfs.workspaceInit",
+        "category": "%open-horizon-client.categories.openHorizon%",
+        "title": "Init workspace folder for HZN FS"
       }
     ],
     "configuration": {
@@ -69,8 +94,7 @@
       "openHorizonView": [
         {
           "id": "horizonExplorer",
-          "name": "Horizon Explorer",
-          "when": "config.openHorizon.connSettingsProvided == true"
+          "name": "Horizon Explorer"
         }
       ]
     },
@@ -82,7 +106,13 @@
           "title": "%open-horizon-client.views.activityBar%"
         }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "horizonExplorer",
+        "contents": "You have not configured any cluster accounts yet.\nTo create new cluster account, with org and user credentials, click the button below.\n\n[Add cluster account](command:open-horizon-client.addClusterAccount)"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
@@ -101,6 +131,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "14.x",
     "@types/shelljs": "^0.8.9",
+    "@types/uuid": "^8.3.3",
     "@types/vscode": "^1.63.0",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
@@ -116,7 +147,9 @@
   "dependencies": {
     "axios": "^0.24.0",
     "got": "^12.0.0",
+    "keytar": "^7.7.0",
     "shelljs": "^0.8.4",
+    "uuid": "^8.3.2",
     "vscode-nls": "^5.0.0"
   }
 }
