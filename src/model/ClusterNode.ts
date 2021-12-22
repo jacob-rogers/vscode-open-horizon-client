@@ -1,15 +1,16 @@
-import * as path from 'path';
-import { TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import Config from '../config';
+import { NodeType } from '../types';
+import { getResourceImagePath } from '../utils';
 import OrgNode from './OrgNode';
 import { ITreeNode } from './TreeNode';
-import { NodeType } from '../types';
 
 export class ClusterNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.CLUSTER;
-
+  
   constructor(
+    private readonly _ctx: ExtensionContext,
     private readonly _clusterId: string,
     private readonly _label: string,
   ) { }
@@ -20,7 +21,7 @@ export class ClusterNode implements ITreeNode {
       label,
       collapsibleState: TreeItemCollapsibleState.Expanded,
       contextValue: `${this._type}-node`,
-      iconPath: path.join(__filename, '..', '..', 'resources', 'cluster.svg'),
+      iconPath: getResourceImagePath(this._ctx, 'cluster.svg'),
     };
   }
 
@@ -33,7 +34,7 @@ export class ClusterNode implements ITreeNode {
 
     if (orgs) {
       for (const org of orgs) {
-        children.push(new OrgNode(clusterAccount, org));
+        children.push(new OrgNode(this._ctx, clusterAccount, org));
       }
     }
 

@@ -1,102 +1,11 @@
-import * as fs from 'fs';
 import * as path from 'path';
-import * as shelljs from 'shelljs';
-import * as vscode from 'vscode';
+import { commands, ExtensionContext, workspace } from 'vscode';
 
-import { BinaryContext } from './context';
-
-type Location = {
-  location: string
-};
-
-type ShellExecError = {
-  code: number;
-  error: string;
-};
-
-interface PathError extends Error {
-}
-
-const horizonEnvFileName = 'horizon.env';
-
-export function arrayEquals<T>(
-  one: ReadonlyArray<T> | undefined,
-  other: ReadonlyArray<T> | undefined,
-  itemEquals: (a: T, b: T) => boolean = (a, b) => a === b): boolean {
-
-  if (one === other) {
-    return true;
-  }
-
-  if (!one || !other) {
-    return false;
-  }
-
-  if (one.length !== other.length) {
-    return false;
-  }
-
-  for (let i = 0, len = one.length; i < len; i++) {
-    if (!itemEquals(one[i], other[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-export async function checkForBinaryLocation(context: BinaryContext, binaryName: string, configBinaryPath?: string): Promise<boolean> {
-  // Configuration has no binary path declaration, need to find its location manually
-  if (!configBinaryPath) {
-    const result = await findHostBinary(binaryName);
-
-    if ((result as ShellExecError).code || (result as ShellExecError).error) {
-      vscode.window.showErrorMessage(`No context binary path found for '${binaryName}': ${(result as ShellExecError).code} ${(result as ShellExecError).error}.`);
-      return false;
-    }
-
-    context.found = true;
-    vscode.window.showInformationMessage(`Default '${binaryName}' location found: ${(result as Location).location}.`);
-    return true;
-  }
-
-  // Binary path declared in configuration, now attempting to verify actual
-  // filepath exists
-  context.found = fs.existsSync(configBinaryPath);
-
-  if (context.found) {
-    context.path = configBinaryPath;
-  } else {
-    vscode.window.showErrorMessage('Missing context binary path file');
-  }
-
-  return context.found;
-}
-
-async function findHostBinary(binaryName: string): Promise<Location | ShellExecError> {
-  const cmd = `which ${binaryName}`;
-
-  const options = {
-    env: {
-      HOME: process.env.HOME,
-      PATH: process.env.PATH,
-    },
-    async: true,
-  };
-
-  return new Promise((resolve, _) => {
-    shelljs.exec(cmd, options, (code, stdout, stderr) => {
-      if (code || stderr.length) {
-        resolve({ code, error: stderr });
-      }
-
-      resolve({ location: stdout });
-    });
-  });
-}
+import { ext } from './extensionVariables';
+import { PathError } from './types';
 
 export function getWorkspacePath(): string | PathError {
-  let workspaceFolder = vscode.workspace.workspaceFolders;
+  let workspaceFolder = workspace.workspaceFolders;
 
   if (workspaceFolder && workspaceFolder.length === 1) {
     return workspaceFolder[0].uri.fsPath;
@@ -108,12 +17,16 @@ export function getWorkspacePath(): string | PathError {
   } as PathError;
 }
 
-export function getHorizonEnvFilePath(): string | PathError {
-  const workspacePath = getWorkspacePath();
+export function getResourceImagePath(ctx: ExtensionContext, imageFileName: string): string {
+  return path.join(getExtensionPath(ctx), 'resources', imageFileName);
+}
 
-  if ((workspacePath as PathError).name === 'PathError') {
-    return workspacePath as PathError;
-  }
+export function getExtensionPath(context: ExtensionContext): string {
+  return context.extensionPath;
+}
 
-  return workspacePath + path.sep + horizonEnvFileName;
+export function initExtVariables(context: ExtensionContext): void {
+  ext.context = context;
+  ext.hznTempFsInitialized = false;
+  commands.executeCommand('setContext', 'open-horizon-client.configHasClusterAccounts', false);
 }

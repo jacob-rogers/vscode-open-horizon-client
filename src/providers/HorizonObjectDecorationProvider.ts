@@ -3,8 +3,7 @@ import {
   FileDecorationProvider, ProviderResult, ThemeColor, Uri, window,
 } from 'vscode';
 
-import { NodeStatus } from './types';
-
+import { NodeStatus } from '../types';
 
 export class HorizonObjectDecorationProvider implements FileDecorationProvider, Disposable {
   private readonly _onDidChange = new EventEmitter<undefined | Uri | Uri[]>();

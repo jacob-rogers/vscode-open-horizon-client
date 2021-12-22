@@ -4,32 +4,15 @@ import * as vscode from 'vscode';
 
 import Config, { updateOrg } from './config';
 import { ext } from './extensionVariables';
-import { HorizonObjectDecorationProvider } from './HorizonObjectDecorationProvider';
-import { HorizonResourceVFSProvider } from './HorizonResourceVFSProvider';
-import { HorizonTreeDataProvider } from './HorizonTreeDataProvider';
-import { ClusterAccount } from './types';
+import { HorizonObjectDecorationProvider } from './providers/HorizonObjectDecorationProvider';
+import { HorizonResourceVFSProvider } from './providers/HorizonResourceVFSProvider';
+import { HorizonTreeDataProvider } from './providers/HorizonTreeDataProvider';
+import { ClusterAccount, HorizonEnvvars } from './types';
+import ui, { SetupOption, setupOptionItems } from './uiConstants';
+import { initExtVariables } from './utils';
 
 
 const extName = 'open-horizon-client';
-
-const setupOptionItems = [
-  {
-    id: 'interactive-setup',
-    label: 'Set up Cluster Account props using interactive inputs',
-    detail: `Shows step-by-step user input boxes`,
-  },
-  {
-    id: 'file-setup',
-    label: 'Load from .env file',
-    detail: `Shows an open file dialog, accepts a file with env vars in key=value format`,
-  },
-];
-
-function initExtVariables(context: vscode.ExtensionContext): void {
-  ext.context = context;
-  ext.hznTempFsInitialized = false;
-  vscode.commands.executeCommand('setContext', 'open-horizon-client.configHasClusterAccounts', false);
-}
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log(`Congratulations, your extension '${ext.extensionName}' is now active!`);
@@ -55,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   // Horizon tree data provider to explore cluster resources, showing at activity bar
-  const horizonDataProvider = new HorizonTreeDataProvider(context, hznFs);
+  const horizonDataProvider = new HorizonTreeDataProvider(context);
   disposables.push(vscode.window.registerTreeDataProvider('horizonExplorer', horizonDataProvider));
 
   // Decoration provider for Horizon tree items
@@ -128,28 +111,28 @@ function substituteSlashes(uri: vscode.Uri): vscode.Uri {
 function validateConfigUserInput(key: string, value: string, checkForDuplicates?: boolean) {
   if (checkForDuplicates) {
     if (
-      key === 'cluster-name' &&
+      key === ui.inputs.clusterAccount.name.key &&
       Config.getInstance().clusterAccounts.some((ca) => ca.name === value)
     ) {
       return 'Such name is already used. Please specify another one.';
     }
   }
 
-  return value === '' ? `[${key}] Field is required` : null;
+  return value === '' ? 'Field is required' : null;
 }
 
-interface SetupOption extends vscode.QuickPickItem {
-  id: string;
+interface SetupOptionItem extends vscode.QuickPickItem {
+  id: SetupOption;
 };
 
 async function addClusterAccount(): Promise<string | undefined> {
   const disposables: vscode.Disposable[] = [];
 
-  let setupOptionSelected: string | undefined;
+  let setupOptionSelected: SetupOption | undefined;
   try {
-    setupOptionSelected = await new Promise<string | undefined>((resolve, _) => {
-      const input = vscode.window.createQuickPick<SetupOption>();
-      input.title = 'Cluster Account setup options';
+    setupOptionSelected = await new Promise<SetupOption | undefined>((resolve, _) => {
+      const input = vscode.window.createQuickPick<SetupOptionItem>();
+      input.title = ui.quickPicks.clusterAccount.setupOptions.title;
       input.items = setupOptionItems;
       input.activeItems = [setupOptionItems[0]];
       input.ignoreFocusOut = true;
@@ -173,18 +156,18 @@ async function addClusterAccount(): Promise<string | undefined> {
 
   // If cancelled or inivalid option selected, break and return nothing
   if (!setupOptionSelected ||
-    !['interactive-setup', 'file-setup'].includes(setupOptionSelected)) {
+    !(Object.values(SetupOption).includes(setupOptionSelected as SetupOption))) {
     return Promise.resolve(undefined);
   }
 
   return new Promise<string | undefined>(async (resolve, reject) => {
-    if (setupOptionSelected === 'interactive-setup') {
+    if (setupOptionSelected === SetupOption.INTERACTIVE) {
       const clusterExchangeURL = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster Exchange URL',
-        placeHolder: 'e.g. "https://cluster1.mycompany.com/edge-exchange/v1/"',
+        title: ui.inputs.clusterAccount.exchangeURL.title,
+        placeHolder: ui.inputs.clusterAccount.exchangeURL.placeholder,
         validateInput: (text) => {
-          return validateConfigUserInput('cluster-exchangeUrl', text);
+          return validateConfigUserInput(ui.inputs.clusterAccount.exchangeURL.key, text);
         },
       });
       if (!clusterExchangeURL) {
@@ -198,7 +181,7 @@ async function addClusterAccount(): Promise<string | undefined> {
       if (existingClusterAccount) {
         const answer = await vscode.window.showQuickPick(['No', 'Yes'], {
           ignoreFocusOut: true,
-          title: 'Cluster Account for specified Exchange URL is already configured. Rewrite?',
+          title: ui.quickPicks.clusterAccount.overwrite.title,
         });
         if (!answer || answer === 'No') {
           return reject(undefined);
@@ -207,10 +190,10 @@ async function addClusterAccount(): Promise<string | undefined> {
 
       const clusterName = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster name',
-        placeHolder: 'e.g. "Globex Corp. cluster"',
+        title: ui.inputs.clusterAccount.name.title,
+        placeHolder: ui.inputs.clusterAccount.name.placeholder,
         validateInput: (text) => {
-          return validateConfigUserInput('cluster-name', text, true);
+          return validateConfigUserInput(ui.inputs.clusterAccount.name.key, text, true);
         },
       });
       if (!clusterName) {
@@ -219,16 +202,16 @@ async function addClusterAccount(): Promise<string | undefined> {
 
       const clusterDescription = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster description',
-        placeHolder: 'e.g. "Cluster for Globex Corp. edge devices management"',
+        title: ui.inputs.clusterAccount.description.title,
+        placeHolder: ui.inputs.clusterAccount.description.placeholder,
       });
 
       const clusterOrgId = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster organization ID',
-        placeHolder: 'e.g. "myorg"',
+        title: ui.inputs.clusterAccount.orgId.title,
+        placeHolder: ui.inputs.clusterAccount.orgId.placeholder,
         validateInput: (text) => {
-          return validateConfigUserInput('cluster-orgId', text);
+          return validateConfigUserInput(ui.inputs.clusterAccount.orgId.key, text);
         },
       });
       if (!clusterOrgId) {
@@ -237,10 +220,10 @@ async function addClusterAccount(): Promise<string | undefined> {
 
       const clusterCssURL = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster CSS URL',
-        placeHolder: 'e.g. "https://cluster1.mycompany.com/edge-css/v1/"',
+        title: ui.inputs.clusterAccount.cssURL.title,
+        placeHolder: ui.inputs.clusterAccount.cssURL.placeholder,
         validateInput: (text) => {
-          return validateConfigUserInput('cluster-cssUrl', text);
+          return validateConfigUserInput(ui.inputs.clusterAccount.cssURL.key, text);
         },
       });
       if (!clusterCssURL) {
@@ -249,17 +232,17 @@ async function addClusterAccount(): Promise<string | undefined> {
 
       const clusterAgbotURL = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster Agbot URL',
-        placeHolder: 'e.g. "https://cluster1.mycompany.com/edge-agbot/v1/"',
+        title: ui.inputs.clusterAccount.agbotURL.title,
+        placeHolder: ui.inputs.clusterAccount.agbotURL.placeholder,
       });
 
       const clusterExchangeUserAuth = await vscode.window.showInputBox({
         ignoreFocusOut: true,
-        title: 'Cluster Exchange user auth credentials',
-        placeHolder: 'e.g. "user1:some_password"',
+        title: ui.inputs.clusterAccount.exchangeUserAuth.title,
+        placeHolder: ui.inputs.clusterAccount.exchangeUserAuth.placeholder,
         password: true,
         validateInput: (text) => {
-          return validateConfigUserInput('cluster-exchangeUserAuth', text);
+          return validateConfigUserInput(ui.inputs.clusterAccount.exchangeUserAuth.key, text);
         },
       });
       if (!clusterExchangeUserAuth) {
@@ -278,12 +261,12 @@ async function addClusterAccount(): Promise<string | undefined> {
 
       return resolve(clusterName);
 
-    } else if (setupOptionSelected === 'file-setup') {
+    } else if (setupOptionSelected === SetupOption.FILE) {
       const fileUri = await vscode.window.showOpenDialog({
         canSelectFolders: false,
         canSelectMany: false,
-        title: 'Upload a file with env variables for Cluster Account setup',
-        openLabel: 'Add env file',
+        title: ui.openDialogs.clusterAccount.uploadEnvFile.title,
+        openLabel: ui.openDialogs.clusterAccount.uploadEnvFile.openLabel,
       });
 
       if (fileUri) {
@@ -296,22 +279,22 @@ async function addClusterAccount(): Promise<string | undefined> {
           const [envKey, envVal] = env.split('=', 2);
 
           switch (envKey) {
-            case 'HZN_ORG_ID':
+            case HorizonEnvvars.HZN_ORG_ID:
               orgs[0].id = envVal;
               break;
-            case 'HZN_EXCHANGE_USER_AUTH':
+            case HorizonEnvvars.HZN_EXCHANGE_USER_AUTH:
               orgs[0].userAuth = envVal;
               break;
-            case 'HZN_EXCHANGE_URL':
+            case HorizonEnvvars.HZN_EXCHANGE_URL:
               partialClusterAccount.exchangeURL = envVal;
               break;
-            case 'HZN_FSS_CSSURL':
+            case HorizonEnvvars.HZN_FSS_CSSURL:
               partialClusterAccount.cssURL = envVal;
               break;
-            case 'HZN_AGBOT_URL':
+            case HorizonEnvvars.HZN_AGBOT_URL:
               partialClusterAccount.agbotURL = envVal;
               break;
-            case 'HZN_MGMT_HUB_CERT_PATH':
+            case HorizonEnvvars.HZN_MGMT_HUB_CERT_PATH:
               partialClusterAccount.clusterCertPath = envVal;
               break;
             default:
@@ -326,22 +309,20 @@ async function addClusterAccount(): Promise<string | undefined> {
         if (existingClusterAccount) {
           const answer = await vscode.window.showQuickPick(['No', 'Yes'], {
             ignoreFocusOut: true,
-            title: 'Cluster Account for specified Exchange URL is already configured. Rewrite?',
-            onDidSelectItem: (item) => console.log(item),
+            title: ui.quickPicks.clusterAccount.overwrite.title,
           });
           if (!answer || answer === 'No') {
-            console.log(`I am here, answer is ${answer}`);
             return reject(undefined);
           }
         }
 
         const clusterName = await vscode.window.showInputBox({
           ignoreFocusOut: true,
-          title: 'Cluster name',
-          placeHolder: 'e.g. "Globex Corp. cluster"',
+          title: ui.inputs.clusterAccount.name.title,
+          placeHolder: ui.inputs.clusterAccount.name.placeholder,
           value: existingClusterAccount?.name,
           validateInput: (text) => {
-            return validateConfigUserInput('cluster-name', text);
+            return validateConfigUserInput(ui.inputs.clusterAccount.name.key, text);
           },
         });
         if (!clusterName) {
@@ -350,8 +331,8 @@ async function addClusterAccount(): Promise<string | undefined> {
 
         const clusterDescription = await vscode.window.showInputBox({
           ignoreFocusOut: true,
-          title: 'Cluster description',
-          placeHolder: 'e.g. "Cluster for Globex Corp. edge devices management"',
+          title: ui.inputs.clusterAccount.description.title,
+          placeHolder: ui.inputs.clusterAccount.description.placeholder,
           value: existingClusterAccount?.description,
         });
 

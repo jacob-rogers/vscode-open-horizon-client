@@ -1,12 +1,11 @@
-import { URL } from 'url';
 import {
   Event, EventEmitter, ExtensionContext, FileSystemProvider,
-  ProviderResult, TreeDataProvider, TreeItem,
+  ProviderResult, TreeDataProvider, TreeItem
 } from 'vscode';
 
-import Config from './config';
-import { ClusterNode } from './model/ClusterNode';
-import { ITreeNode } from './model/TreeNode';
+import Config from '../config';
+import { ClusterNode } from '../model/ClusterNode';
+import { ITreeNode } from '../model/TreeNode';
 
 export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
   private _onDidChangeTreeData: EventEmitter<ITreeNode | undefined> =
@@ -14,10 +13,7 @@ export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
   public readonly onDidChangeTreeData: Event<ITreeNode | undefined> =
     this._onDidChangeTreeData.event;
 
-  constructor(
-    private context: ExtensionContext,
-    private hznFs: FileSystemProvider,
-  ) { }
+  constructor(private readonly _ctx: ExtensionContext) { }
 
   refresh(node?: ITreeNode): void {
     this._onDidChangeTreeData.fire(node);
@@ -45,7 +41,7 @@ export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
 
     const objects: ITreeNode[] = [];
     for (const ca of clusterAccounts) {
-      objects.push(new ClusterNode(ca.id, ca.name));
+      objects.push(new ClusterNode(this._ctx, ca.id, ca.name));
     }
 
     return objects;

@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse } from 'axios';
-import { TreeItem, TreeItemCollapsibleState, window } from 'vscode';
+import { ExtensionContext, TreeItem, TreeItemCollapsibleState, window } from 'vscode';
 
 import {
   getApiNodesUrl, getApiPatternsUrl, getApiPoliciesUrl,
@@ -11,22 +11,29 @@ import PolicyNode from './PolicyNode';
 import ServiceNode from './ServiceNode';
 import { ITreeNode } from './TreeNode';
 import {
-  ClusterAccount, HTTPServiceAccount, NodeMetadata,
+  ClusterAccount, ClusterOrg, HTTPServiceAccount, NodeMetadata,
   NodeType, ServiceMetadata,
 } from '../types';
 
 export class HorizonNode implements ITreeNode {
-  private readonly _label: string;
-  private readonly _type: NodeType;
-
   constructor(
+    private readonly _ctx: ExtensionContext,
     private readonly _clusterAccount: ClusterAccount,
     private readonly _orgId: string,
-    label: string,
-    type: NodeType,
-  ) {
-    this._label = label;
-    this._type = type;
+    private readonly _label: string,
+    private readonly _type: NodeType,
+  ) { }
+
+  private getExchangeUrl(): string {
+    return this._clusterAccount.exchangeURL;
+  }
+
+  private get orgId(): string {
+    return this._orgId;
+  }
+
+  private getOrgItem(): ClusterOrg | undefined {
+    return this._clusterAccount.orgs.find((org) => org.id === this.orgId);
   }
 
   public getTreeItem(): Promise<TreeItem> | TreeItem {
@@ -42,9 +49,9 @@ export class HorizonNode implements ITreeNode {
     const children: ITreeNode[] = [];
 
     const serviceAccount: HTTPServiceAccount = {
-      baseUrl: this._clusterAccount.exchangeURL,
-      orgId: this._clusterAccount.orgs.find((o) => o.id === this._orgId)?.id || '',
-      userpass: this._clusterAccount.orgs.find((o) => o.id === this._orgId)?.userAuth || '',
+      baseUrl: this.getExchangeUrl(),
+      orgId: this.orgId,
+      userpass: this.getOrgItem()?.userAuth || '',
     };
     const client = httpClient(serviceAccount);
 
@@ -71,7 +78,7 @@ export class HorizonNode implements ITreeNode {
           for (const [serviceName, serviceMetadataList] of services) {
             children.push(
               new ServiceNode(
-                this._clusterAccount, this._orgId,
+                this._ctx, this._clusterAccount, this.orgId,
                 serviceName, serviceMetadataList, 'url',
               ),
             );
@@ -90,7 +97,10 @@ export class HorizonNode implements ITreeNode {
 
           for (const [nodeName, nodeMetadata] of nodes) {
             children.push(
-              new DeviceNode(this._clusterAccount, this._orgId, nodeName, nodeMetadata),
+              new DeviceNode(
+                this._ctx, this._clusterAccount,
+                this.orgId, nodeName, nodeMetadata,
+              ),
             );
           }
 
@@ -101,7 +111,9 @@ export class HorizonNode implements ITreeNode {
           response = await client.get(patternsUrl);
           Object.keys(response.data.patterns).forEach((pattern: string) => {
             const [, patternName] = pattern.split('/', 2);
-            children.push(new PatternNode(this._clusterAccount, this._orgId, patternName));
+            children.push(
+              new PatternNode(this._ctx, this._clusterAccount, this.orgId, patternName),
+            );
           });
 
           break;
@@ -111,7 +123,9 @@ export class HorizonNode implements ITreeNode {
           response = await client.get(policiesUrl);
           Object.keys(response.data.businessPolicy).forEach((policy: string) => {
             const [, policyName] = policy.split('/', 2);
-            children.push(new PolicyNode(this._clusterAccount, this._orgId, policyName));
+            children.push(
+              new PolicyNode(this._ctx, this._clusterAccount, this.orgId, policyName),
+            );
           });
 
           break;
@@ -121,7 +135,9 @@ export class HorizonNode implements ITreeNode {
       }
     } catch (response: unknown) {
       if ((response as AxiosError).message) {
-        window.showErrorMessage(`Cannot fetch Horizon objects of type '${this._type}': ${(response as AxiosError).message}`);
+        window.showErrorMessage(
+          `Cannot fetch Horizon objects of type '${this._type}': ${(response as AxiosError).message}`
+        );
         return Promise.reject();
       }
 

@@ -1,39 +1,45 @@
-import * as path from 'path';
-import { TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
 
+import { ClusterAccount, ClusterOrg, Node, NodeType } from '../types';
 import { getOrgResourceURI } from '../uris';
+import { getResourceImagePath } from '../utils';
+import { HORIZON_ORG_OBJECTS } from './constants';
 import { HorizonNode } from './HorizonNode';
 import { ITreeNode } from './TreeNode';
-import { ClusterAccount, ClusterOrg, Node, NodeType } from '../types';
-
-const HORIZON_ORG_OBJECTS = [
-  { label: 'Services', type: NodeType.SERVICE },
-  { label: 'Nodes', type: NodeType.NODE },
-  { label: 'Patterns', type: NodeType.PATTERN },
-  { label: 'Policies', type: NodeType.POLICY }
-];
 
 export default class OrgNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.ORG;
 
   constructor(
+    private readonly _ctx: ExtensionContext,
     private readonly _clusterAccount: ClusterAccount,
     private readonly _org: ClusterOrg,
   ) { }
 
+  private get org(): ClusterOrg {
+    return this._org;
+  }
+
+  private getExchangeUrl(): string {
+    return this._clusterAccount.exchangeURL;
+  }
+
   public getTreeItem(): TreeItem | Promise<TreeItem> {
-    const label = this._org.id;
+    const label = this.org.id;
     return {
       label,
-      description: '(org)',
+      collapsibleState: TreeItemCollapsibleState.Collapsed,
+      description: `(${this._type})`,
       command: {
         command: 'open-horizon-client.openResource',
         title: 'Open resource',
-        arguments: [ getOrgResourceURI(this._clusterAccount.exchangeURL, label), label ],
+        arguments: [
+          getOrgResourceURI(this.getExchangeUrl(), label),
+          label,
+        ],
       },
-      collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: `${this._type}-node`,
-      iconPath: path.join(__filename, '..', '..', 'resources', 'org.svg'),
+      iconPath: getResourceImagePath(this._ctx, 'org.svg'),
     };
   }
 
@@ -42,11 +48,13 @@ export default class OrgNode implements ITreeNode {
 
     (HORIZON_ORG_OBJECTS as Node[]).forEach((root) => {
       children.push(
-        new HorizonNode(this._clusterAccount, this._org.id, root.label, root.type),
+        new HorizonNode(
+          this._ctx, this._clusterAccount,
+          this.org.id, root.label, root.type,
+        ),
       );
     });
 
     return Promise.resolve(children);
   }
-
 }
