@@ -2,9 +2,9 @@ import * as path from 'path';
 import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import Config from '../config';
-import { OrgNode } from './OrgNode';
+import OrgNode from './OrgNode';
 import { ITreeNode } from './TreeNode';
-import { NodeType } from './types';
+import { NodeType } from '../types';
 
 export class ClusterNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.CLUSTER;

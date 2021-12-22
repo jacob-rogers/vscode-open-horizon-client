@@ -8,6 +8,11 @@ export const enum NodeType {
   POLICY = 'policy',
 }
 
+export const enum NodeStatus {
+  RUNNING = 'running',
+  STOPPED = 'stopped',
+}
+
 export interface ClientConfiguration {
   clusterAccounts: ClusterAccount[];
 }

@@ -3,9 +3,9 @@ import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import { getPolicyResourceURI } from '../uris';
 import { ITreeNode } from './TreeNode';
-import { ClusterAccount, NodeType } from './types';
+import { ClusterAccount, NodeType } from '../types';
 
-export class PolicyItem implements ITreeNode {
+export default class PolicyItem implements ITreeNode {
   private readonly _type: NodeType = NodeType.POLICY;
 
   constructor(
@@ -25,6 +25,7 @@ export class PolicyItem implements ITreeNode {
         title: 'Open resource',
         arguments: [ getPolicyResourceURI(this._clusterAccount.exchangeURL, orgId, label), label ],
       },
+      contextValue: `${this._type}-node`,
       iconPath: path.join(__filename, '..', '..', 'resources', 'policy.svg'),
     };
   }

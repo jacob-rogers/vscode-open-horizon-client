@@ -4,7 +4,6 @@ import {
   ProviderResult, TreeDataProvider, TreeItem,
 } from 'vscode';
 
-import { AuthData } from './auth';
 import Config from './config';
 import { ClusterNode } from './model/ClusterNode';
 import { ITreeNode } from './model/TreeNode';
@@ -17,7 +16,6 @@ export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
 
   constructor(
     private context: ExtensionContext,
-    private readonly _authData: AuthData,
     private hznFs: FileSystemProvider,
   ) { }
 

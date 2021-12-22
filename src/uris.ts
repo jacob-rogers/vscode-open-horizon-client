@@ -1,6 +1,5 @@
 import { URL } from 'url';
 import { Uri } from 'vscode';
-import { AuthData } from './auth';
 
 const scheme = 'hzn';
 

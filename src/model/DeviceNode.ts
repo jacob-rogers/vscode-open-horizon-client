@@ -4,9 +4,9 @@ import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import { getNodeResourceURI } from '../uris';
 import { ITreeNode } from './TreeNode';
-import { ClusterAccount, NodeMetadata, NodeType } from './types';
+import { ClusterAccount, NodeMetadata, NodeType } from '../types';
 
-export class DeviceNode implements ITreeNode {
+export default class DeviceNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.NODE;
 
   constructor(

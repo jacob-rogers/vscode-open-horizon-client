@@ -1,4 +1,3 @@
-import path = require('path');
 import {
   Disposable, Event, EventEmitter, FileChangeEvent, FileChangeType, FileStat,
   FileSystemError, FileSystemProvider, FileType, ProgressLocation, Uri, window,
@@ -49,69 +48,8 @@ export class HorizonResourceVFSProvider implements FileSystemProvider {
   root = new Directory('');
 
   private _emitter = new EventEmitter<FileChangeEvent[]>();
-  private _bufferedEvents: FileChangeEvent[] = [];
-  private _fireSoonHandle?: NodeJS.Timer;
 
   readonly onDidChangeFile: Event<FileChangeEvent[]> = this._emitter.event;
-
-  private _lookup(uri: Uri, silent: false): Entry;
-  private _lookup(uri: Uri, silent: boolean): Entry | undefined;
-  private _lookup(uri: Uri, silent: boolean): Entry | undefined {
-    const parts = uri.path.split('/');
-    let entry: Entry = this.root;
-    for (const part of parts) {
-      if (!part) {
-        continue;
-      }
-      let child: Entry | undefined;
-      if (entry instanceof Directory) {
-        child = entry.entries.get(part);
-      }
-      if (!child) {
-        if (!silent) {
-          throw FileSystemError.FileNotFound(uri);
-        } else {
-          return undefined;
-        }
-      }
-      entry = child;
-    }
-    return entry;
-  }
-
-  private _lookupAsFile(uri: Uri, silent: boolean): File {
-    const entry = this._lookup(uri, silent);
-    if (entry instanceof File) {
-      return entry;
-    }
-    throw FileSystemError.FileIsADirectory(uri);
-  }
-
-  private _lookupAsDirectory(uri: Uri, silent: boolean): Directory {
-    const entry = this._lookup(uri, silent);
-    if (entry instanceof Directory) {
-      return entry;
-    }
-    throw FileSystemError.FileNotADirectory(uri);
-  }
-
-  private _lookupParentDirectory(uri: Uri): Directory {
-    const dirname = uri.with({ path: path.posix.dirname(uri.path) });
-    return this._lookupAsDirectory(dirname, false);
-  }
-
-  private _fireSoon(...events: FileChangeEvent[]): void {
-    this._bufferedEvents.push(...events);
-
-    if (this._fireSoonHandle) {
-      clearTimeout(this._fireSoonHandle);
-    }
-
-    this._fireSoonHandle = setTimeout(() => {
-      this._emitter.fire(this._bufferedEvents);
-      this._bufferedEvents.length = 0;
-    }, 5);
-  }
 
   watch(uri: Uri, options: { recursive: boolean; excludes: string[]; }): Disposable {
     // ignore, fires for all changes...

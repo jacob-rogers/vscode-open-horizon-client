@@ -3,9 +3,9 @@ import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import { getServiceResourceURI } from '../uris';
 import { ITreeNode } from './TreeNode';
-import { ClusterAccount, NodeType, ServiceGroup, ServiceMetadata } from './types';
+import { ClusterAccount, NodeType, ServiceGroup, ServiceMetadata } from '../types';
 
-export class ServiceItem implements ITreeNode {
+export default class ServiceItem implements ITreeNode {
   private readonly _type: NodeType = NodeType.SERVICE;
 
   constructor(
@@ -23,13 +23,7 @@ export class ServiceItem implements ITreeNode {
         : TreeItemCollapsibleState.None;
     const label = this._label;
     const orgId = this._orgId;
-    const contextValue = this._serviceGroup === 'url'
-      ? 'service.url'
-      : this._serviceGroup === 'arch'
-        ? 'service.byArch'
-        : this._serviceGroup === 'version'
-          ? 'service.byVersion'
-          : 'service';
+    const contextValue = this.getContextValue();
     const description = this._serviceGroup === 'none'
       ? `${this._metadataList[0].arch}-${this._metadataList[0].version}`
       : undefined;
@@ -52,6 +46,25 @@ export class ServiceItem implements ITreeNode {
       iconPath,
       tooltip: label.toString(),
     };
+  }
+
+  private getContextValue(): string {
+    let ctxValueSuffix;
+    switch (this._serviceGroup) {
+      case 'url':
+        ctxValueSuffix = 'url';
+        break;
+      case 'arch':
+        ctxValueSuffix = 'byArch';
+        break;
+      case 'version':
+        ctxValueSuffix = 'byVersion';
+        break;
+    }
+
+    return ctxValueSuffix
+      ? `${this._type}.${ctxValueSuffix}`
+      : this._type.toString();
   }
 
   public getChildren(): Promise<ITreeNode[]> {

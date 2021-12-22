@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { ClientConfiguration, ClusterAccount } from './model/types';
+
+import { ClientConfiguration, ClusterAccount, ClusterOrg } from './types';
 
 const clusterAccountDefaultProps: Partial<ClusterAccount> = {
   serviceKeys: {
@@ -72,7 +73,7 @@ export default class Config implements vscode.Memento, ClientConfiguration {
    * @param value New Cluster Account object value or its partial (will be merged with existing one)
    */
   static update(key: string, value: any): Thenable<void> {
-    const clusterAccountIdx = 
+    const clusterAccountIdx =
       Config._instance.clusterAccounts.findIndex((ca) => ca.id === key);
 
     if (clusterAccountIdx >= 0) {
@@ -104,12 +105,30 @@ export default class Config implements vscode.Memento, ClientConfiguration {
   static updateClusterAccount(
     clusterId: string,
     clusterAccountPartial: ClusterAccount | Partial<ClusterAccount>): void {
-      const ca = Config.get<ClusterAccount>(clusterId);
-      if (ca) {
-        // Write only a partial update, if cluster account exists
-        Config.update(clusterId, Object.assign({}, ca, clusterAccountPartial));
-      } else {
-        Config.update(clusterId, Object.assign({}, clusterAccountPartial));
-      }
+    const ca = Config.get<ClusterAccount>(clusterId);
+    if (ca) {
+      // Write only a partial update, if cluster account exists
+      Config.update(clusterId, Object.assign({}, ca, clusterAccountPartial));
+    } else {
+      Config.update(clusterId, Object.assign({}, clusterAccountPartial));
+    }
   }
+}
+
+export function updateOrg(clusterId: string, newOrg: ClusterOrg): ClusterOrg[] {
+  const currentClusterAccount = Config.get<ClusterAccount>(clusterId);
+
+  if (currentClusterAccount) {
+    const newOrgs = [...currentClusterAccount.orgs];
+    const orgIdIdx = newOrgs.findIndex((org) => org.id === newOrg.id);
+    if (orgIdIdx >= 0) {
+      newOrgs[orgIdIdx] = newOrg;
+      return newOrgs;
+    } else {
+      newOrgs.push(newOrg);
+      return newOrgs;
+    }
+  }
+
+  return [newOrg];
 }

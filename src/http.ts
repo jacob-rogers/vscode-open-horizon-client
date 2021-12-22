@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import * as https from 'https';
 import { URL } from 'url';
 
-import { HTTPServiceAccount } from './model/types';
+import { HTTPServiceAccount } from './types';
 
 export function httpClient(serviceAccount: HTTPServiceAccount): AxiosInstance {
   const { orgId, userpass } = serviceAccount;

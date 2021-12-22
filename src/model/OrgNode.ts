@@ -4,7 +4,7 @@ import { TreeItem, TreeItemCollapsibleState } from 'vscode';
 import { getOrgResourceURI } from '../uris';
 import { HorizonNode } from './HorizonNode';
 import { ITreeNode } from './TreeNode';
-import { ClusterAccount, ClusterOrg, Node, NodeType } from './types';
+import { ClusterAccount, ClusterOrg, Node, NodeType } from '../types';
 
 const HORIZON_ORG_OBJECTS = [
   { label: 'Services', type: NodeType.SERVICE },
@@ -13,7 +13,7 @@ const HORIZON_ORG_OBJECTS = [
   { label: 'Policies', type: NodeType.POLICY }
 ];
 
-export class OrgNode implements ITreeNode {
+export default class OrgNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.ORG;
 
   constructor(

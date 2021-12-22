@@ -2,18 +2,18 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { TreeItem, TreeItemCollapsibleState, window } from 'vscode';
 
 import {
-  getApiNodesUrl, getApiPatternsUrl,
-  getApiPoliciesUrl, getApiServicesUrl, httpClient,
+  getApiNodesUrl, getApiPatternsUrl, getApiPoliciesUrl,
+  getApiServicesUrl, httpClient,
 } from '../http';
-import { DeviceNode } from './DeviceNode';
-import { PatternItem } from './PatternItem';
-import { PolicyItem } from './PolicyItem';
-import { ServiceItem } from './ServiceItem';
+import DeviceNode from './DeviceNode';
+import PatternNode from './PatternNode';
+import PolicyNode from './PolicyNode';
+import ServiceNode from './ServiceNode';
 import { ITreeNode } from './TreeNode';
 import {
   ClusterAccount, HTTPServiceAccount, NodeMetadata,
   NodeType, ServiceMetadata,
-} from './types';
+} from '../types';
 
 export class HorizonNode implements ITreeNode {
   private readonly _label: string;
@@ -70,7 +70,7 @@ export class HorizonNode implements ITreeNode {
 
           for (const [serviceName, serviceMetadataList] of services) {
             children.push(
-              new ServiceItem(
+              new ServiceNode(
                 this._clusterAccount, this._orgId,
                 serviceName, serviceMetadataList, 'url',
               ),
@@ -101,7 +101,7 @@ export class HorizonNode implements ITreeNode {
           response = await client.get(patternsUrl);
           Object.keys(response.data.patterns).forEach((pattern: string) => {
             const [, patternName] = pattern.split('/', 2);
-            children.push(new PatternItem(this._clusterAccount, this._orgId, patternName));
+            children.push(new PatternNode(this._clusterAccount, this._orgId, patternName));
           });
 
           break;
@@ -111,7 +111,7 @@ export class HorizonNode implements ITreeNode {
           response = await client.get(policiesUrl);
           Object.keys(response.data.businessPolicy).forEach((policy: string) => {
             const [, policyName] = policy.split('/', 2);
-            children.push(new PolicyItem(this._clusterAccount, this._orgId, policyName));
+            children.push(new PolicyNode(this._clusterAccount, this._orgId, policyName));
           });
 
           break;
