@@ -1,9 +1,12 @@
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
-
 import { ClusterAccount, NodeType } from '../types';
-import { getPatternResourceURI } from '../uris';
-import { getResourceImagePath } from '../utils';
-import { ITreeNode } from './TreeNode';
+import { Constants } from '../util/constants';
+import { getPatternResourceURI, getResourceImagePath } from '../util/resources';
+import ITreeNode from './TreeNode';
+
+// Command namespace
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const { command: { Commands } } = Constants;
 
 export default class PatternNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.PATTERN;
@@ -32,8 +35,8 @@ export default class PatternNode implements ITreeNode {
       label: this.label,
       collapsibleState: TreeItemCollapsibleState.None,
       command: {
-        command: 'open-horizon-client.openResource',
-        title: 'Open resource',
+        command: Commands.OpenResource.id,
+        title: Commands.OpenResource.title,
         arguments: [
           getPatternResourceURI(this.getExchangeURL(), this.orgId, this.label),
           this.label,
@@ -47,5 +50,4 @@ export default class PatternNode implements ITreeNode {
   public getChildren(): Promise<ITreeNode[]> {
     return Promise.resolve([]);
   }
-
 }

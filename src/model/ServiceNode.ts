@@ -1,9 +1,12 @@
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
+import { ClusterAccount, ExplorerServiceGroup, NodeType, ServiceMetadata } from '../types';
+import { Constants } from '../util/constants';
+import { getResourceImagePath, getServiceResourceURI } from '../util/resources';
+import ITreeNode from './TreeNode';
 
-import { ClusterAccount, NodeType, ServiceGroup, ServiceMetadata } from '../types';
-import { getServiceResourceURI } from '../uris';
-import { getResourceImagePath } from '../utils';
-import { ITreeNode } from './TreeNode';
+// Command namespace
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const { command: { Commands } } = Constants;
 
 export default class ServiceNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.SERVICE;
@@ -14,8 +17,12 @@ export default class ServiceNode implements ITreeNode {
     private readonly _orgId: string,
     private readonly _label: string,
     private readonly _metadataList: ServiceMetadata[],
-    private readonly _serviceGroup: ServiceGroup,
+    private readonly _serviceGroup: ExplorerServiceGroup,
   ) { }
+
+  private get metadataList(): ServiceMetadata[] {
+    return this._metadataList;
+  }
 
   private get orgId(): string {
     return this._orgId;
@@ -25,32 +32,40 @@ export default class ServiceNode implements ITreeNode {
     return this._label;
   }
 
-  private getExchangeUrl(): string {
-    return this._clusterAccount.exchangeURL;
-  }
-
-  private getCollapsibleState(): TreeItemCollapsibleState {
-    return ['arch', 'url', 'version'].includes(this.serviceGroup)
-      ? TreeItemCollapsibleState.Collapsed
-      : TreeItemCollapsibleState.None;
-  }
-
-  private getDescription(): string | undefined {
-    return this.serviceGroup === 'none'
-      ? `${this._metadataList[0].arch}-${this._metadataList[0].version}`
-      : undefined;
-  }
-
   private get serviceGroup(): string {
     return this._serviceGroup;
   }
 
+  private getCollapsibleState(): TreeItemCollapsibleState {
+    if (this.serviceGroup in [
+      ExplorerServiceGroup.ARCH,
+      ExplorerServiceGroup.URL,
+      ExplorerServiceGroup.VERSION,
+    ]) {
+      return TreeItemCollapsibleState.Collapsed;
+    }
+
+    return TreeItemCollapsibleState.None;
+  }
+
+  private getDescription(): string | undefined {
+    return this.serviceGroup === ExplorerServiceGroup.NONE
+      ? `${this.metadataList[0].arch}-${this.metadataList[0].version}`
+      : undefined;
+  }
+
+  private getExchangeUrl(): string {
+    return this._clusterAccount.exchangeURL;
+  }
+
   private getIconPath(): string | undefined {
-    return ['arch', 'version'].includes(this.serviceGroup)
-      ? getResourceImagePath(this._ctx, `${this._serviceGroup}.svg`)
-      : this._serviceGroup === 'none'
-        ? getResourceImagePath(this._ctx, `service.svg`)
-        : undefined;
+    if (this.serviceGroup in [ExplorerServiceGroup.ARCH, ExplorerServiceGroup.VERSION]) {
+      return getResourceImagePath(this._ctx, `${this.serviceGroup}.svg`);
+    } else if (this.serviceGroup === ExplorerServiceGroup.NONE) {
+      return getResourceImagePath(this._ctx, `service.svg`);
+    }
+
+    return undefined;
   }
 
   public getTreeItem(): TreeItem | Promise<TreeItem> {
@@ -63,8 +78,8 @@ export default class ServiceNode implements ITreeNode {
       label: this.label,
       collapsibleState,
       command: {
-        command: 'open-horizon-client.openResource',
-        title: 'Open resource',
+        command: Commands.OpenResource.id,
+        title: Commands.OpenResource.title,
         arguments: [
           getServiceResourceURI(this.getExchangeUrl(), this.orgId, this.label),
           this.label,
@@ -79,14 +94,14 @@ export default class ServiceNode implements ITreeNode {
 
   private getContextValue(): string {
     let ctxValueSuffix;
-    switch (this._serviceGroup) {
-      case 'url':
+    switch (this.serviceGroup) {
+      case ExplorerServiceGroup.URL:
         ctxValueSuffix = 'url';
         break;
-      case 'arch':
+      case ExplorerServiceGroup.ARCH:
         ctxValueSuffix = 'byArch';
         break;
-      case 'version':
+      case ExplorerServiceGroup.VERSION:
         ctxValueSuffix = 'byVersion';
         break;
     }
@@ -99,9 +114,10 @@ export default class ServiceNode implements ITreeNode {
   public getChildren(): Promise<ITreeNode[]> {
     const children: ITreeNode[] = [];
 
-    if (this._serviceGroup === 'url') {
+    if (this.serviceGroup === ExplorerServiceGroup.URL) {
       const childrenByArch = new Map<string, ServiceMetadata[]>();
-      for (const meta of this._metadataList) {
+
+      for (const meta of this.metadataList) {
         if (childrenByArch.has(meta.arch)) {
           const oldServiceItemList = childrenByArch.get(meta.arch) as ServiceMetadata[];
           const newServiceItemList = [...oldServiceItemList, meta];
@@ -115,15 +131,16 @@ export default class ServiceNode implements ITreeNode {
         children.push(
           new ServiceNode(
             this._ctx, this._clusterAccount, this._orgId,
-            serviceArch, serviceMetadataList, 'arch',
+            serviceArch, serviceMetadataList, ExplorerServiceGroup.ARCH,
           ),
         );
       }
 
       return Promise.resolve(children);
-    } else if (this._serviceGroup === 'arch') {
+    } else if (this._serviceGroup === ExplorerServiceGroup.ARCH) {
       const childrenByVersion = new Map<string, ServiceMetadata[]>();
-      for (const meta of this._metadataList) {
+
+      for (const meta of this.metadataList) {
         if (childrenByVersion.has(meta.version)) {
           const oldServiceItemList = childrenByVersion.get(meta.version) as ServiceMetadata[];
           const newServiceItemList = [...oldServiceItemList, meta];
@@ -137,7 +154,7 @@ export default class ServiceNode implements ITreeNode {
         children.push(
           new ServiceNode(
             this._ctx, this._clusterAccount, this._orgId,
-            serviceVersion, serviceMetadataList, 'version',
+            serviceVersion, serviceMetadataList, ExplorerServiceGroup.VERSION,
           ),
         );
       }
@@ -146,7 +163,8 @@ export default class ServiceNode implements ITreeNode {
     }
 
     const childrenExact = new Map<string, ServiceMetadata[]>();
-    for (const meta of this._metadataList) {
+
+    for (const meta of this.metadataList) {
       if (childrenExact.has(meta.url)) {
         const oldServiceItemList = childrenExact.get(meta.url) as ServiceMetadata[];
         const newServiceItemList = [...oldServiceItemList, meta];
@@ -160,7 +178,7 @@ export default class ServiceNode implements ITreeNode {
       children.push(
         new ServiceNode(
           this._ctx, this._clusterAccount, this._orgId,
-          service, serviceMetadataList, 'none',
+          service, serviceMetadataList, ExplorerServiceGroup.NONE,
         ),
       );
     }

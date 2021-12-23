@@ -1,20 +1,17 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState, window } from 'vscode';
-
-import httpClient, {
-  getApiNodesUrl, getApiPatternsUrl, getApiPoliciesUrl, getApiServicesUrl
-} from '../http';
+import * as http from '../http';
 import {
-  ClusterAccount, ClusterOrg, HTTPServiceAccount, NodeMetadata,
-  NodeType, ServiceMetadata
+  ClusterAccount, ClusterOrg, ExplorerServiceGroup,
+  HTTPServiceAccount, NodeMetadata, NodeType, ServiceMetadata
 } from '../types';
 import DeviceNode from './DeviceNode';
 import PatternNode from './PatternNode';
 import PolicyNode from './PolicyNode';
 import ServiceNode from './ServiceNode';
-import { ITreeNode } from './TreeNode';
+import ITreeNode from './TreeNode';
 
-export class HorizonNode implements ITreeNode {
+export default class HorizonNode implements ITreeNode {
   constructor(
     private readonly _ctx: ExtensionContext,
     private readonly _clusterAccount: ClusterAccount,
@@ -23,12 +20,16 @@ export class HorizonNode implements ITreeNode {
     private readonly _type: NodeType,
   ) { }
 
-  private getExchangeUrl(): string {
-    return this._clusterAccount.exchangeURL;
+  private get label(): string {
+    return this._label;
   }
 
   private get orgId(): string {
     return this._orgId;
+  }
+
+  private getExchangeUrl(): string {
+    return this._clusterAccount.exchangeURL;
   }
 
   private getOrgItem(): ClusterOrg | undefined {
@@ -36,9 +37,8 @@ export class HorizonNode implements ITreeNode {
   }
 
   public getTreeItem(): Promise<TreeItem> | TreeItem {
-    const label = this._label;
     return {
-      label,
+      label: this.label,
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: `${this._type}-list`,
     };
@@ -52,13 +52,13 @@ export class HorizonNode implements ITreeNode {
       orgId: this.orgId,
       userpass: this.getOrgItem()?.userAuth || '',
     };
-    const client = httpClient(serviceAccount);
+    const client = http.Client(serviceAccount);
 
     try {
       let response: AxiosResponse;
       switch (this._type) {
         case NodeType.SERVICE:
-          const servicesUrl = getApiServicesUrl(serviceAccount);
+          const servicesUrl = http.getApiServicesUrl(serviceAccount);
 
           response = await client.get(servicesUrl);
           const services = new Map<string, ServiceMetadata[]>();
@@ -78,14 +78,14 @@ export class HorizonNode implements ITreeNode {
             children.push(
               new ServiceNode(
                 this._ctx, this._clusterAccount, this.orgId,
-                serviceName, serviceMetadataList, 'url',
+                serviceName, serviceMetadataList, ExplorerServiceGroup.URL,
               ),
             );
           }
 
           break;
         case NodeType.NODE:
-          const nodesUrl = getApiNodesUrl(serviceAccount);
+          const nodesUrl = http.getApiNodesUrl(serviceAccount);
 
           response = await client.get(nodesUrl);
           const nodes = new Map<string, NodeMetadata>();
@@ -105,7 +105,7 @@ export class HorizonNode implements ITreeNode {
 
           break;
         case NodeType.PATTERN:
-          const patternsUrl = getApiPatternsUrl(serviceAccount);
+          const patternsUrl = http.getApiPatternsUrl(serviceAccount);
 
           response = await client.get(patternsUrl);
           Object.keys(response.data.patterns).forEach((pattern: string) => {
@@ -117,7 +117,7 @@ export class HorizonNode implements ITreeNode {
 
           break;
         case NodeType.POLICY:
-          const policiesUrl = getApiPoliciesUrl(serviceAccount);
+          const policiesUrl = http.getApiPoliciesUrl(serviceAccount);
 
           response = await client.get(policiesUrl);
           Object.keys(response.data.businessPolicy).forEach((policy: string) => {

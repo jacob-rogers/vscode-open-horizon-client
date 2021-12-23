@@ -44,7 +44,7 @@ export class Directory implements FileStat {
 
 export type Entry = File | Directory;
 
-export class HorizonResourceVFSProvider implements FileSystemProvider {
+export default class HorizonResourceVFSProvider implements FileSystemProvider {
   root = new Directory('');
 
   private _emitter = new EventEmitter<FileChangeEvent[]>();

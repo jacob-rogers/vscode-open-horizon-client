@@ -4,9 +4,9 @@ import {
 
 import Config from '../config';
 import { ClusterNode } from '../model/ClusterNode';
-import { ITreeNode } from '../model/TreeNode';
+import ITreeNode from '../model/TreeNode';
 
-export class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
+export default class HorizonTreeDataProvider implements TreeDataProvider<ITreeNode> {
   private _onDidChangeTreeData: EventEmitter<ITreeNode | undefined> =
     new EventEmitter<ITreeNode | undefined>();
   public readonly onDidChangeTreeData: Event<ITreeNode | undefined> =

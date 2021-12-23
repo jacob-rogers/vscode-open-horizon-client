@@ -1,14 +1,13 @@
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
-
 import { ClusterAccount, ClusterOrg, Node, NodeType } from '../types';
-import { getOrgResourceURI } from '../uris';
 import { Constants } from '../util/constants';
-import { getResourceImagePath } from '../utils';
-import { HorizonNode } from './HorizonNode';
-import { ITreeNode } from './TreeNode';
+import { getOrgResourceURI, getResourceImagePath } from '../util/resources';
+import HorizonNode from './HorizonNode';
+import ITreeNode from './TreeNode';
 
-// model namespace
-const { model } = Constants;
+// model / command namespace
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const { command: { Commands }, model } = Constants;
 
 export default class OrgNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.ORG;
@@ -34,8 +33,8 @@ export default class OrgNode implements ITreeNode {
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       description: `(${this._type})`,
       command: {
-        command: 'open-horizon-client.openResource',
-        title: 'Open resource',
+        command: Commands.OpenResource.id,
+        title: Commands.OpenResource.title,
         arguments: [
           getOrgResourceURI(this.getExchangeUrl(), label),
           label,

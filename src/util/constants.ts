@@ -1,8 +1,19 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { NodeType, SetupOption } from '../types';
 
 export namespace Constants {
   // Common used extension name
   export const extensionName = 'open-horizon-client';
+
+  // Constants used in commands functions
+  export namespace command {
+    export const Commands = {
+      OpenResource: {
+        id: `${extensionName}.openResource`,
+        title: 'Open resource',
+      },
+    };
+  }
 
   // Extension data model constants
   export namespace model {

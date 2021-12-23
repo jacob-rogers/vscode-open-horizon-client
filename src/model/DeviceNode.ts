@@ -1,9 +1,11 @@
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
-
 import { ClusterAccount, NodeMetadata, NodeStatus, NodeType } from '../types';
-import { getNodeResourceURI } from '../uris';
-import { getResourceImagePath } from '../utils';
-import { ITreeNode } from './TreeNode';
+import { Constants } from '../util/constants';
+import { getNodeResourceURI, getResourceImagePath } from '../util/resources';
+import ITreeNode from './TreeNode';
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const { command: { Commands } } = Constants;
 
 export default class DeviceNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.NODE;
@@ -16,18 +18,18 @@ export default class DeviceNode implements ITreeNode {
     private readonly _metadata: NodeMetadata,
   ) { }
 
-  private getExchangeUrl(): string {
-    return this._clusterAccount.exchangeURL;
-  }
-
   private get label(): string {
-    return this._label.startsWith(this._orgId)
+    return this._label.startsWith(this.orgId)
       ? this._label.split('/', 2)[1]
       : this._label;
   }
 
   private get orgId(): string {
     return this._orgId;
+  }
+
+  private getExchangeUrl(): string {
+    return this._clusterAccount.exchangeURL;
   }
 
   private getNodeStatus(): NodeStatus {
@@ -48,8 +50,8 @@ export default class DeviceNode implements ITreeNode {
       collapsibleState: TreeItemCollapsibleState.None,
       description: this.getTreeItemDescription(),
       command: {
-        command: 'open-horizon-client.openResource',
-        title: 'Open resource',
+        command: Commands.OpenResource.id,
+        title: Commands.OpenResource.title,
         arguments: [
           getNodeResourceURI(this.getExchangeUrl(), this.orgId, this.label),
           this.label,

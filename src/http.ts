@@ -4,7 +4,8 @@ import { URL } from 'url';
 
 import { HTTPServiceAccount } from './types';
 
-export default function httpClient(serviceAccount: HTTPServiceAccount): AxiosInstance {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function Client(serviceAccount: HTTPServiceAccount): AxiosInstance {
   const { orgId, userpass } = serviceAccount;
   const [username, password] = userpass.split(':', 2);
 

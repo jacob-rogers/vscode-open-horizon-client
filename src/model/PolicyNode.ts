@@ -1,9 +1,12 @@
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
-
 import { ClusterAccount, NodeType } from '../types';
-import { getPolicyResourceURI } from '../uris';
-import { getResourceImagePath } from '../utils';
-import { ITreeNode } from './TreeNode';
+import { Constants } from '../util/constants';
+import { getPolicyResourceURI, getResourceImagePath } from '../util/resources';
+import ITreeNode from './TreeNode';
+
+// Command namespace
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const { command: { Commands } } = Constants;
 
 export default class PolicyItem implements ITreeNode {
   private readonly _type: NodeType = NodeType.POLICY;
@@ -15,10 +18,6 @@ export default class PolicyItem implements ITreeNode {
     private readonly _label: string,
   ) { }
 
-  private getExchangeUrl(): string {
-    return this._clusterAccount.exchangeURL;
-  }
-
   private get label(): string {
     return this._label;
   }
@@ -27,13 +26,17 @@ export default class PolicyItem implements ITreeNode {
     return this._orgId;
   }
 
+  private getExchangeUrl(): string {
+    return this._clusterAccount.exchangeURL;
+  }
+
   public getTreeItem(): TreeItem | Promise<TreeItem> {
     return {
       label: this.label,
       collapsibleState: TreeItemCollapsibleState.None,
       command: {
-        command: 'open-horizon-client.openResource',
-        title: 'Open resource',
+        command: Commands.OpenResource.id,
+        title: Commands.OpenResource.title,
         arguments: [
           getPolicyResourceURI(this.getExchangeUrl(), this.orgId, this.label),
           this.label,

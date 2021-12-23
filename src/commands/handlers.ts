@@ -1,23 +1,23 @@
 import { commands, Uri, window, workspace } from 'vscode';
 import { ext } from '../extensionVariables';
-import { HorizonTreeDataProvider } from '../providers/HorizonTreeDataProvider';
+import HorizonTreeDataProvider from '../providers/HorizonTreeDataProvider';
 import { addClusterAccount } from '../ui';
 import { loadResource } from '../util/resources';
 
-export function workspaceInitHandler() : void {
+export function workspaceInitHandler(): void {
   workspace.updateWorkspaceFolders(
     0, 0, { uri: Uri.parse(`${ext.vfsScheme}:/`), name: ext.vfsWorkspaceFolderName });
 }
 
-export async function openResourceHandler(uri: Uri) : Promise<void> {
+export async function openResourceHandler(uri: Uri): Promise<void> {
   loadResource(uri);
 }
 
-export function explorerRefreshHandler(explorer: HorizonTreeDataProvider) : void {
+export function explorerRefreshHandler(explorer: HorizonTreeDataProvider): void {
   explorer.refresh();
 }
 
-export async function addClusterAccountHandler() : Promise<void> {
+export async function addClusterAccountHandler(): Promise<void> {
   let clusterName: string | undefined;
   try {
     clusterName = await addClusterAccount();

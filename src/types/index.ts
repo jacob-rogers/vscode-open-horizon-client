@@ -58,6 +58,13 @@ export interface SetupOptionItem extends QuickPickItem {
 }
 
 /* Enum types */
+export enum ExplorerServiceGroup {
+  NONE = 'none',
+  ARCH = 'arch',
+  URL = 'url',
+  VERSION = 'version',
+}
+
 export enum NodeType {
   CLUSTER = 'cluster',
   ORG = 'org',

@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
-
 import * as Handlers from './commands/handlers';
 import Config from './config';
 import { ext } from './extensionVariables';
-import { HorizonObjectDecorationProvider } from './providers/HorizonObjectDecorationProvider';
-import { HorizonResourceVFSProvider } from './providers/HorizonResourceVFSProvider';
-import { HorizonTreeDataProvider } from './providers/HorizonTreeDataProvider';
+import HorizonObjectDecorationProvider from './providers/HorizonObjectDecorationProvider';
+import HorizonResourceVFSProvider from './providers/HorizonResourceVFSProvider';
+import HorizonTreeDataProvider from './providers/HorizonTreeDataProvider';
 import { Constants } from './util/constants';
-import { initExtVariables } from './utils';
+import { initExtVariables } from './util/common';
 
 const { ui } = Constants;
 const {

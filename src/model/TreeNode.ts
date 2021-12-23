@@ -1,6 +1,6 @@
 import { TreeItem } from 'vscode';
 
-export interface ITreeNode {
+export default interface ITreeNode {
   getTreeItem(): Promise<TreeItem> | TreeItem;
   getChildren(): Promise<ITreeNode[]>;
 }

@@ -5,7 +5,7 @@ import {
 
 import { NodeStatus } from '../types';
 
-export class HorizonObjectDecorationProvider implements FileDecorationProvider, Disposable {
+export default class HorizonObjectDecorationProvider implements FileDecorationProvider, Disposable {
   private readonly _onDidChange = new EventEmitter<undefined | Uri | Uri[]>();
   get onDidChange(): Event<undefined | Uri | Uri[]> {
     return this._onDidChange.event;
