@@ -8,7 +8,7 @@ import { ITreeNode } from './TreeNode';
 
 export class ClusterNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.CLUSTER;
-  
+
   constructor(
     private readonly _ctx: ExtensionContext,
     private readonly _clusterId: string,

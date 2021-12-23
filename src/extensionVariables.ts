@@ -1,5 +1,7 @@
 import { ExtensionContext } from 'vscode';
 
+import { Constants } from './util/constants';
+
 /**
  * Namespace for common variables used throughout the extension.
  * They must be initialized in the activate() method of extension.ts
@@ -15,6 +17,7 @@ export namespace ext {
 
   export let hznTempFsInitialized: boolean;
 
-  export const extensionName: string = 'open-horizon-client';
-  export const vfsScheme: string = 'hzn';
+  export const extensionName: string = Constants.extensionName;
+  export const vfsScheme: string = Constants.vfsScheme;
+  export const vfsWorkspaceFolderName: string = Constants.vfsWorkspaceFolderName;
 }

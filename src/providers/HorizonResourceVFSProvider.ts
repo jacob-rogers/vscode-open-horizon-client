@@ -1,6 +1,6 @@
 import {
-  Disposable, Event, EventEmitter, FileChangeEvent, FileChangeType, FileStat,
-  FileSystemError, FileSystemProvider, FileType, ProgressLocation, Uri, window,
+  Disposable, Event, EventEmitter, FileChangeEvent, FileStat,
+  FileSystemError, FileSystemProvider, FileType, ProgressLocation, Uri, window
 } from 'vscode';
 
 export class File implements FileStat {

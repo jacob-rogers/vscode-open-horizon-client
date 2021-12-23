@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
+import { QuickPickItem } from 'vscode';
+
 /* Interface types */
 export interface ClientConfiguration {
   clusterAccounts: ClusterAccount[];
@@ -22,7 +24,7 @@ export interface ClusterAccount {
   isAdmin?: boolean;
 }
 
-interface ClusterOrg {
+export interface ClusterOrg {
   id: string;
   userAuth: string;
 }
@@ -51,8 +53,12 @@ export interface ServiceMetadata {
   url: string;
 }
 
+export interface SetupOptionItem extends QuickPickItem {
+  id: SetupOption;
+}
+
 /* Enum types */
-export const enum NodeType {
+export enum NodeType {
   CLUSTER = 'cluster',
   ORG = 'org',
   SERVICE = 'service',
@@ -61,12 +67,12 @@ export const enum NodeType {
   POLICY = 'policy',
 }
 
-export const enum NodeStatus {
+export enum NodeStatus {
   RUNNING = 'running',
   STOPPED = 'stopped',
 }
 
-export const enum HorizonEnvvars {
+export enum HorizonEnvvars {
   HZN_ORG_ID = 'HZN_ORG_ID',
   HZN_EXCHANGE_USER_AUTH = 'HZN_EXCHANGE_USER_AUTH',
   HZN_EXCHANGE_URL = 'HZN_EXCHANGE_URL',
@@ -75,8 +81,13 @@ export const enum HorizonEnvvars {
   HZN_MGMT_HUB_CERT_PATH = 'HZN_MGMT_HUB_CERT_PATH',
 }
 
+export enum SetupOption {
+  INTERACTIVE,
+  FILE,
+}
+
 /* Regular types */
 export type ServiceGroup = 'arch' | 'url' | 'version' | 'none';
 
-interface PathError extends Error {
-}
+/* Error types */
+export interface PathError extends Error { }

@@ -2,10 +2,13 @@ import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
 
 import { ClusterAccount, ClusterOrg, Node, NodeType } from '../types';
 import { getOrgResourceURI } from '../uris';
+import { Constants } from '../util/constants';
 import { getResourceImagePath } from '../utils';
-import { HORIZON_ORG_OBJECTS } from './constants';
 import { HorizonNode } from './HorizonNode';
 import { ITreeNode } from './TreeNode';
+
+// model namespace
+const { model } = Constants;
 
 export default class OrgNode implements ITreeNode {
   private readonly _type: NodeType = NodeType.ORG;
@@ -46,7 +49,7 @@ export default class OrgNode implements ITreeNode {
   public getChildren(): Promise<ITreeNode[]> {
     const children: ITreeNode[] = [];
 
-    (HORIZON_ORG_OBJECTS as Node[]).forEach((root) => {
+    (model.orgObjects as Node[]).forEach((root) => {
       children.push(
         new HorizonNode(
           this._ctx, this._clusterAccount,

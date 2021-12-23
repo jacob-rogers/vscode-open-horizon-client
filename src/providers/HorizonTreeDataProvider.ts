@@ -1,6 +1,5 @@
 import {
-  Event, EventEmitter, ExtensionContext, FileSystemProvider,
-  ProviderResult, TreeDataProvider, TreeItem
+  Event, EventEmitter, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem
 } from 'vscode';
 
 import Config from '../config';

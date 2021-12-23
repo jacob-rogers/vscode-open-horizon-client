@@ -1,19 +1,18 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState, window } from 'vscode';
 
-import {
-  getApiNodesUrl, getApiPatternsUrl, getApiPoliciesUrl,
-  getApiServicesUrl, httpClient,
+import httpClient, {
+  getApiNodesUrl, getApiPatternsUrl, getApiPoliciesUrl, getApiServicesUrl
 } from '../http';
+import {
+  ClusterAccount, ClusterOrg, HTTPServiceAccount, NodeMetadata,
+  NodeType, ServiceMetadata
+} from '../types';
 import DeviceNode from './DeviceNode';
 import PatternNode from './PatternNode';
 import PolicyNode from './PolicyNode';
 import ServiceNode from './ServiceNode';
 import { ITreeNode } from './TreeNode';
-import {
-  ClusterAccount, ClusterOrg, HTTPServiceAccount, NodeMetadata,
-  NodeType, ServiceMetadata,
-} from '../types';
 
 export class HorizonNode implements ITreeNode {
   constructor(

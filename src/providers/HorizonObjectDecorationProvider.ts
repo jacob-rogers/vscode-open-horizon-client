@@ -1,6 +1,6 @@
 import {
   CancellationToken, Disposable, Event, EventEmitter, FileDecoration,
-  FileDecorationProvider, ProviderResult, ThemeColor, Uri, window,
+  FileDecorationProvider, ProviderResult, ThemeColor, Uri, window
 } from 'vscode';
 
 import { NodeStatus } from '../types';

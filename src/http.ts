@@ -4,7 +4,7 @@ import { URL } from 'url';
 
 import { HTTPServiceAccount } from './types';
 
-export function httpClient(serviceAccount: HTTPServiceAccount): AxiosInstance {
+export default function httpClient(serviceAccount: HTTPServiceAccount): AxiosInstance {
   const { orgId, userpass } = serviceAccount;
   const [username, password] = userpass.split(':', 2);
 
@@ -28,7 +28,7 @@ export function httpClient(serviceAccount: HTTPServiceAccount): AxiosInstance {
 function getApiBaseUrl(serviceAccount: HTTPServiceAccount): URL {
   let baseUrl = serviceAccount.baseUrl;
   if (baseUrl.endsWith('/')) {
-    baseUrl = baseUrl.slice(0, baseUrl.length-1);
+    baseUrl = baseUrl.slice(0, baseUrl.length - 1);
   }
 
   return new URL(baseUrl);

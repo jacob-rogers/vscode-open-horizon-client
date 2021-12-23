@@ -31,8 +31,8 @@ export default class ServiceNode implements ITreeNode {
 
   private getCollapsibleState(): TreeItemCollapsibleState {
     return ['arch', 'url', 'version'].includes(this.serviceGroup)
-        ? TreeItemCollapsibleState.Collapsed
-        : TreeItemCollapsibleState.None;
+      ? TreeItemCollapsibleState.Collapsed
+      : TreeItemCollapsibleState.None;
   }
 
   private getDescription(): string | undefined {
