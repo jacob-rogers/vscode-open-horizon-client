@@ -8,15 +8,46 @@ export namespace Constants {
   // Constants used in commands functions
   export namespace command {
     export const Commands = {
-      OpenResource: {
-        id: `${extensionName}.openResource`,
-        title: 'Open resource',
+      ClusterAccount: {
+        Add: {
+          id: `${extensionName}.addClusterAccount`,
+          title: 'Add Cluster account',
+        },
+      },
+      ExplorerRefresh: {
+        id: `${extensionName}.horizonExplorerRefresh`,
+        title: 'Refresh Horizon Explorer tree',
+      },
+      Resource: {
+        Diff: {
+          id: `${extensionName}.resources.diff`,
+          title: 'Diff resources',
+        },
+        Open: {
+          id: `${extensionName}.openResource`,
+          title: 'Open resource',
+        },
+        Publish: {
+          id: `${extensionName}.publishResource`,
+          title: 'Publish resource',
+        },
+      },
+      VFS: {
+        InitInWorkspace: {
+          id: `${extensionName}.vfs.workspaceInit`,
+          title: 'Init virtual FS in workspace',
+        },
       },
     };
   }
 
   // Extension data model constants
   export namespace model {
+    export const GlobalState = {
+      keys: {
+        clusterAccounts: `${extensionName}.clusterAccounts`,
+      }
+    };
     export const orgObjects = [
       { label: 'Services', type: NodeType.SERVICE },
       { label: 'Nodes', type: NodeType.NODE },
@@ -102,6 +133,9 @@ export namespace Constants {
       }
     };
   };
+
+  // Type of resource definition files
+  export const resourceDefFileType = 'json';
 
   /* Virtual file system for data model resources and temp files/folders */
   // VFS scheme name (a prefix in resource uris)

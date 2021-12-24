@@ -1,7 +1,8 @@
+// External dependencies
 import {
   Event, EventEmitter, ExtensionContext, ProviderResult, TreeDataProvider, TreeItem
 } from 'vscode';
-
+// Internal modules
 import Config from '../config';
 import { ClusterNode } from '../model/ClusterNode';
 import ITreeNode from '../model/TreeNode';

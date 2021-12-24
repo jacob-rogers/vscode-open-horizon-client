@@ -1,5 +1,7 @@
+// External dependencies
 import { AxiosError, AxiosResponse } from 'axios';
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState, window } from 'vscode';
+// Internal modules
 import * as http from '../http';
 import {
   ClusterAccount, ClusterOrg, ExplorerServiceGroup,
@@ -77,7 +79,7 @@ export default class HorizonNode implements ITreeNode {
           for (const [serviceName, serviceMetadataList] of services) {
             children.push(
               new ServiceNode(
-                this._ctx, this._clusterAccount, this.orgId,
+                this._ctx, this._clusterAccount, this.orgId, serviceAccount,
                 serviceName, serviceMetadataList, ExplorerServiceGroup.URL,
               ),
             );

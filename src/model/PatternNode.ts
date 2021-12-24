@@ -1,4 +1,6 @@
+// External dependencies
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
+// Internal modules
 import { ClusterAccount, NodeType } from '../types';
 import { Constants } from '../util/constants';
 import { getPatternResourceURI, getResourceImagePath } from '../util/resources';
@@ -35,8 +37,8 @@ export default class PatternNode implements ITreeNode {
       label: this.label,
       collapsibleState: TreeItemCollapsibleState.None,
       command: {
-        command: Commands.OpenResource.id,
-        title: Commands.OpenResource.title,
+        command: Commands.Resource.Open.id,
+        title: Commands.Resource.Open.title,
         arguments: [
           getPatternResourceURI(this.getExchangeURL(), this.orgId, this.label),
           this.label,

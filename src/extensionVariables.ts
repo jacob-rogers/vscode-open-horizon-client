@@ -1,5 +1,6 @@
+// External dependencies
 import { ExtensionContext } from 'vscode';
-
+// Internal modules
 import { Constants } from './util/constants';
 
 /**

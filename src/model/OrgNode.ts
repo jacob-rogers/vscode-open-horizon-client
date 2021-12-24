@@ -1,4 +1,6 @@
+// External dependencies
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
+// Internal modules
 import { ClusterAccount, ClusterOrg, Node, NodeType } from '../types';
 import { Constants } from '../util/constants';
 import { getOrgResourceURI, getResourceImagePath } from '../util/resources';
@@ -33,8 +35,8 @@ export default class OrgNode implements ITreeNode {
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       description: `(${this._type})`,
       command: {
-        command: Commands.OpenResource.id,
-        title: Commands.OpenResource.title,
+        command: Commands.Resource.Open.id,
+        title: Commands.Resource.Open.title,
         arguments: [
           getOrgResourceURI(this.getExchangeUrl(), label),
           label,

@@ -1,4 +1,6 @@
+// External dependencies
 import { commands, ExtensionContext, workspace } from 'vscode';
+// Internal modules
 import { ext } from '../extensionVariables';
 import { PathError } from '../types';
 

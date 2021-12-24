@@ -1,17 +1,50 @@
+// External dependencies
+import { AxiosError } from 'axios';
 import * as path from 'path';
 import { URL } from 'url';
 import { ExtensionContext, Uri, window, workspace } from 'vscode';
+// Internal modules
 import { ext } from '../extensionVariables';
+import * as http from '../http';
+import { HTTPServiceAccount, NodeType } from '../types';
 import { getExtensionPath } from './common';
+import { Constants } from './constants';
 
 export function getResourceImagePath(ctx: ExtensionContext, imageFileName: string): string {
   return path.join(getExtensionPath(ctx), 'resources', imageFileName);
 }
 
-export function loadResource(uri: Uri) {
-  const fileType = 'json';
-  const formattedUri = substituteSlashes(uri.with({ path: uri.path + `.${fileType}` }));
-  workspace.openTextDocument(formattedUri)
+export async function loadResource(sa: HTTPServiceAccount, kind: NodeType, uri: Uri) {
+  const resourceId = uri.path.split('/').pop();
+  let httpUri = '';
+  switch (kind) {
+    case NodeType.SERVICE:
+      httpUri = http.getApiServicesUrl(sa, resourceId);
+  }
+
+  const client = http.Client(sa);
+
+  const fileName = uri.with({ path: uri.path + `.${Constants.resourceDefFileType}` });
+
+  let data;
+  try {
+    const response = await client.get(httpUri);
+    data = Object.values(response.data.services)[0];
+
+    await workspace.fs.writeFile(fileName, Buffer.from(JSON.stringify(data, null, 2)));
+  } catch (response: unknown) {
+    if ((response as AxiosError).message) {
+      window.showErrorMessage(
+        `Cannot fetch Horizon object '${resourceId}' of type '${kind}': ${(response as AxiosError).message}`
+      );
+      return Promise.reject();
+    }
+
+    window.showErrorMessage(`Error: ${response}`);
+    return Promise.reject();
+  };
+
+  workspace.openTextDocument(fileName)
     .then((doc) => {
       if (doc) {
         window.showTextDocument(doc);
@@ -20,27 +53,18 @@ export function loadResource(uri: Uri) {
       (err) => window.showErrorMessage(`Error loading document: ${err}`));
 }
 
-function substituteSlashes(uri: Uri): Uri {
-  const resultUri = `${uri.scheme}:/` + uri.toString()
-    .replace(uri.scheme + ':', '')
-    .replace('/', '-');
-
-  return Uri.parse(resultUri);
-}
-
-
 export function getHost(httpUri: string): string {
   return new URL(httpUri).host;
 }
 
 export function getClusterResourceURI(httpUri: string): Uri {
   const host = getHost(httpUri);
-  return Uri.parse(`${ext.vfsScheme}:/cluster-${host}`, true);
+  return Uri.from({ scheme: ext.vfsScheme, authority: host });
 }
 
 export function getOrgResourceURI(httpUri: string, orgId: string): Uri {
   const baseUri = getClusterResourceURI(httpUri);
-  return baseUri.with({ path: baseUri.path + `/orgs/${orgId}` });
+  return baseUri.with({ path: `/orgs/${orgId}` });
 }
 
 export function getNodeResourceURI(httpUri: string, orgId: string, nodeId: string): Uri {

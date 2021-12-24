@@ -1,6 +1,11 @@
-import * as vscode from 'vscode';
+// External dependencies
+import { ExtensionContext, Memento, Uri } from 'vscode';
+// Internal modules
+import { ClientConfiguration, ClusterAccount, ClusterOrg, HTTPServiceAccount } from './types';
+import { Constants } from './util/constants';
 
-import { ClientConfiguration, ClusterAccount, ClusterOrg } from './types';
+// Model namespace
+const { model } = Constants;
 
 const clusterAccountDefaultProps: Partial<ClusterAccount> = {
   serviceKeys: {
@@ -11,11 +16,11 @@ const clusterAccountDefaultProps: Partial<ClusterAccount> = {
   isAdmin: false,
 };
 
-export default class Config implements vscode.Memento, ClientConfiguration {
+export default class Config implements Memento, ClientConfiguration {
   private static _instance: ClientConfiguration;
   clusterAccounts: ClusterAccount[];
 
-  constructor() {
+  private constructor() {
     this.clusterAccounts = [];
   }
 
@@ -45,7 +50,7 @@ export default class Config implements vscode.Memento, ClientConfiguration {
    * @returns a list of Cluster Account object IDs
    */
   private static keys(): readonly string[] {
-    return Config._instance.clusterAccounts.map(ca => ca.id);
+    return Config.getInstance().clusterAccounts.map(ca => ca.id);
   }
 
   /**
@@ -72,7 +77,7 @@ export default class Config implements vscode.Memento, ClientConfiguration {
    * @param key Cluster Account object ID (string value)
    * @param value New Cluster Account object value or its partial (will be merged with existing one)
    */
-  static update(key: string, value: any): Thenable<void> {
+  static update(ctx: ExtensionContext, key: string, value: any): Thenable<void> {
     const clusterAccountIdx =
       Config._instance.clusterAccounts.findIndex((ca) => ca.id === key);
 
@@ -85,13 +90,17 @@ export default class Config implements vscode.Memento, ClientConfiguration {
       });
     }
 
+    ctx.globalState
+      .update(model.GlobalState.keys.clusterAccounts, Config._instance.clusterAccounts);
+
     return Promise.resolve();
   }
 
-  static init(): ClientConfiguration {
+  static init(ctx: ExtensionContext): ClientConfiguration {
     if (!Config.getInstance()) {
       Config._instance = new Config();
-      Config._instance.clusterAccounts = [];
+      Config._instance.clusterAccounts = ctx.globalState
+        .get<ClusterAccount[]>(model.GlobalState.keys.clusterAccounts) || [];
       return Config._instance;
     }
 
@@ -102,15 +111,36 @@ export default class Config implements vscode.Memento, ClientConfiguration {
     return Config._instance;
   }
 
+  static getServiceAccount(resourceUri: Uri): HTTPServiceAccount {
+    const { clusterAccounts } = this.getInstance();
+    const clusterHost = resourceUri.authority;
+    // Org ID is supposed being a third token of uri path,
+    // means '<cluster_host>/orgs/:orgId/...'
+    const orgId = resourceUri.path.split('/')[2];
+
+    const clusterAccountIdx = clusterAccounts
+      .findIndex((ca) => ca.exchangeURL.includes(clusterHost));
+
+    const serviceAccount: HTTPServiceAccount = {
+      baseUrl: clusterAccounts[clusterAccountIdx].exchangeURL,
+      orgId,
+      userpass: clusterAccounts[clusterAccountIdx].orgs
+        .find((org) => org.id === orgId)?.userAuth || '',
+    };
+
+    return serviceAccount;
+  }
+
   static updateClusterAccount(
+    ctx: ExtensionContext,
     clusterId: string,
     clusterAccountPartial: ClusterAccount | Partial<ClusterAccount>): void {
     const ca = Config.get<ClusterAccount>(clusterId);
     if (ca) {
       // Write only a partial update, if cluster account exists
-      Config.update(clusterId, Object.assign({}, ca, clusterAccountPartial));
+      Config.update(ctx, clusterId, Object.assign({}, ca, clusterAccountPartial));
     } else {
-      Config.update(clusterId, Object.assign({}, clusterAccountPartial));
+      Config.update(ctx, clusterId, Object.assign({}, clusterAccountPartial));
     }
   }
 }

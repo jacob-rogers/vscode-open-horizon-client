@@ -1,4 +1,6 @@
+// External dependencies
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
+// Internal modules
 import { ClusterAccount, NodeMetadata, NodeStatus, NodeType } from '../types';
 import { Constants } from '../util/constants';
 import { getNodeResourceURI, getResourceImagePath } from '../util/resources';
@@ -50,8 +52,8 @@ export default class DeviceNode implements ITreeNode {
       collapsibleState: TreeItemCollapsibleState.None,
       description: this.getTreeItemDescription(),
       command: {
-        command: Commands.OpenResource.id,
-        title: Commands.OpenResource.title,
+        command: Commands.Resource.Open.id,
+        title: Commands.Resource.Open.title,
         arguments: [
           getNodeResourceURI(this.getExchangeUrl(), this.orgId, this.label),
           this.label,

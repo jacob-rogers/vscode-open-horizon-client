@@ -25,9 +25,9 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:open-horizon-client.addClusterAccount",
-    "onCommand:open-horizon-client.hznfs.init",
-    "onCommand:open-horizon-client.hznfs.workspaceInit",
-    "onCommand:open-horizon-client.openOrgFile",
+    "onCommand:open-horizon-client.vfs.workspaceInit",
+    "onCommand:open-horizon-client.openResource",
+    "onCommand:open-horizon-client.publishResource",
     "onView:horizonExplorer"
   ],
   "contributes": {
@@ -38,26 +38,21 @@
         "category": "%open-horizon-client.categories.openHorizon%"
       },
       {
-        "command": "open-horizon-client.setupConnectionSettings",
-        "title": "Setup connection settings",
-        "category": "%open-horizon-client.categories.openHorizon%",
-        "icon": "$(gear)"
-      },
-      {
         "command": "open-horizon-client.openResource",
         "title": "Open resource",
         "category": "%open-horizon-client.categories.openHorizon%",
         "icon": "$(file)"
       },
       {
-        "command": "open-horizon-client.hznfs.init",
+        "command": "open-horizon-client.publishResource",
+        "title": "Publish resource",
         "category": "%open-horizon-client.categories.openHorizon%",
-        "title": "Init HZN FS"
+        "icon": "$(repo-push)"
       },
       {
-        "command": "open-horizon-client.hznfs.workspaceInit",
+        "command": "open-horizon-client.vfs.workspaceInit",
         "category": "%open-horizon-client.categories.openHorizon%",
-        "title": "Init workspace folder for HZN FS"
+        "title": "Show virtual fs as workspace folder"
       }
     ],
     "configuration": {

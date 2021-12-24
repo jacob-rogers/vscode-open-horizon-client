@@ -1,6 +1,8 @@
-import { v5 as uuidv5 } from 'uuid';
-import { Disposable, window } from 'vscode';
+// External dependencies
 import * as fs from 'fs';
+import { v5 as uuidv5 } from 'uuid';
+import { Disposable, ExtensionContext, window } from 'vscode';
+// Internal modules
 import Config, { updateOrg } from '../config';
 import { ClusterAccount, HorizonEnvvars, SetupOption, SetupOptionItem } from '../types';
 import { Constants } from '../util/constants';
@@ -8,7 +10,7 @@ import { Constants } from '../util/constants';
 // UI namespace
 const { ui } = Constants;
 
-export async function addClusterAccount(): Promise<string | undefined> {
+export async function addClusterAccount(ctx: ExtensionContext): Promise<string | undefined> {
   const disposables: Disposable[] = [];
 
   let setupOptionSelected: SetupOption | undefined;
@@ -132,7 +134,7 @@ export async function addClusterAccount(): Promise<string | undefined> {
         return reject(undefined);
       }
 
-      Config.updateClusterAccount(clusterId, {
+      Config.updateClusterAccount(ctx, clusterId, {
         id: clusterId,
         name: clusterName,
         description: clusterDescription,
@@ -220,7 +222,7 @@ export async function addClusterAccount(): Promise<string | undefined> {
         });
 
         const newOrg = orgs[0];
-        Config.updateClusterAccount(clusterId, {
+        Config.updateClusterAccount(ctx, clusterId, {
           id: clusterId,
           name: clusterName,
           description: clusterDescription,

@@ -1,8 +1,9 @@
+// External dependencies
 import {
   CancellationToken, Disposable, Event, EventEmitter, FileDecoration,
   FileDecorationProvider, ProviderResult, ThemeColor, Uri, window
 } from 'vscode';
-
+// Internal modules
 import { NodeStatus } from '../types';
 
 export default class HorizonObjectDecorationProvider implements FileDecorationProvider, Disposable {

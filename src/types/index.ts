@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { QuickPickItem } from 'vscode';
+import { Memento, QuickPickItem } from 'vscode';
 
-/* Interface types */
+/*******************************************************************************
+ * Interface types *************************************************************
+ * ****************************************************************************/
+
 export interface ClientConfiguration {
   clusterAccounts: ClusterAccount[];
 }
@@ -28,6 +31,8 @@ export interface ClusterOrg {
   id: string;
   userAuth: string;
 }
+
+export interface GlobalState extends Memento { }
 
 export interface HTTPServiceAccount {
   baseUrl: string;
@@ -57,7 +62,10 @@ export interface SetupOptionItem extends QuickPickItem {
   id: SetupOption;
 }
 
-/* Enum types */
+/*******************************************************************************
+ * Enum types ******************************************************************
+ * ****************************************************************************/
+
 export enum ExplorerServiceGroup {
   NONE = 'none',
   ARCH = 'arch',
@@ -89,12 +97,27 @@ export enum HorizonEnvvars {
 }
 
 export enum SetupOption {
-  INTERACTIVE,
-  FILE,
+  INTERACTIVE = 'interactive',
+  FILE = 'file',
 }
 
-/* Regular types */
-export type ServiceGroup = 'arch' | 'url' | 'version' | 'none';
+/*******************************************************************************
+ * Error types *****************************************************************
+ * ****************************************************************************/
 
-/* Error types */
 export interface PathError extends Error { }
+
+export interface PublishResourceCallback {
+  ok: boolean;
+  resourceId?: string | null;
+}
+
+/*******************************************************************************
+ * Regular types ***************************************************************
+ * ****************************************************************************/
+
+export type GetResourceDataCallbackFn = (
+  data: string | null,
+  resourceId?: string | null,
+  resourceUri?: string | null,
+) => void;

@@ -1,4 +1,6 @@
+// External dependencies
 import { ExtensionContext, TreeItem, TreeItemCollapsibleState } from 'vscode';
+// Internal modules
 import Config from '../config';
 import { NodeType } from '../types';
 import { getResourceImagePath } from '../util/resources';

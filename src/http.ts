@@ -1,7 +1,8 @@
+// External dependencies
 import axios, { AxiosInstance } from 'axios';
 import * as https from 'https';
 import { URL } from 'url';
-
+// Internal modules
 import { HTTPServiceAccount } from './types';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -63,9 +64,12 @@ export function getApiPoliciesUrl(serviceAccount: HTTPServiceAccount): string {
   return baseUrl.toString();
 }
 
-export function getApiServicesUrl(serviceAccount: HTTPServiceAccount): string {
+export function getApiServicesUrl(serviceAccount: HTTPServiceAccount, id?: string): string {
   const baseUrl = getApiBaseOrgUrl(serviceAccount);
   baseUrl.pathname = baseUrl.pathname + '/services';
+  if (id) {
+    baseUrl.pathname = baseUrl.pathname + '/' + id;
+  }
 
   return baseUrl.toString();
 }
