@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { commands, ExtensionContext, Uri, window, workspace } from 'vscode';
+import { commands, ExtensionContext, ProgressLocation, Uri, window, workspace } from 'vscode';
 // Internal modules
 import { ext } from '../extensionVariables';
 import * as http from '../http';
@@ -89,25 +89,61 @@ function publishResource(cb: (response: PublishResourceCallback) => void): void 
       const response = await client.get(httpUrl);
 
       const exchangeResValue = Object.values(response.data.services)[0] as string;
-      const localResValue = data;
+      const localResValueFormatted = data;
 
       const exchangeResFileName = path.join(os.tmpdir(), `exchange.${resourceId}`);
       const localResFileName = path.join(os.tmpdir(), `local.${resourceId}`);
 
-      fs.writeFileSync(exchangeResFileName, JSON.stringify(exchangeResValue, null, 2));
-      fs.writeFileSync(localResFileName, localResValue);
+      const exchangeResValueFormatted = JSON.stringify(exchangeResValue, null, 2);
+      fs.writeFileSync(exchangeResFileName, exchangeResValueFormatted);
+      fs.writeFileSync(localResFileName, localResValueFormatted);
 
       commands.executeCommand(
         'vscode.diff',
         Uri.file(exchangeResFileName),
         Uri.file(localResFileName),
-      ).then((result) => {
-        console.log(result);
-        cb({ ok: true, resourceId });
+        'exchange ↔ local',
+      ).then(async () => {
+        await window.showInformationMessage(
+          "Resource diff is opened in active editor.<br />To publish changes (right-side modified version), click on 'Publish' button",
+          'Publish',
+        );
+
+        const res = await window.showInformationMessage(
+          `To publish changes, click on 'Publish' button`,
+          {
+            detail: 'Your Exchange resource definition (on left-side) will be overwritten by your modified version (on right-side)',
+            modal: true,
+          },
+          'Publish',
+        );
+
+        if (res === 'Publish') {
+          await window.withProgress({
+            location: ProgressLocation.Notification,
+            cancellable: false,
+            title: `Publishing a resource '${resourceId}'`,
+          }, async (progress) => {
+            progress.report({ increment: 0 });
+            const response = await client.put(httpUrl, localResValueFormatted, {
+              headers: {
+                'content-type': 'application/json',
+              },
+            });
+  
+            if (response.status === 201) {
+              cb({ ok: true, resourceId });
+              progress.report({ increment: 100 });
+              return;
+            }
+          });
+        }
+
+        cb({ ok: false });
         return;
       });
     }
-    
+
     cb({ ok: false });
     return;
   });
@@ -172,5 +208,5 @@ function getResourceData(cb: GetResourceDataCallbackFn): void {
 function removeResourceFileExt(resourceId: string): string {
   // Resource ID contains file extension, which should be removed along with point.
   // Thus, when definition type is 'json', '.json' suffix will be excluded
-  return resourceId.substring(0, resourceId.length-(resourceDefFileType.length+1));
+  return resourceId.substring(0, resourceId.length - (resourceDefFileType.length + 1));
 }
